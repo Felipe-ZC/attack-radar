@@ -1,0 +1,39 @@
+name: General Issue
+description: A simple template for tracking bugs, features, and tasks
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Brief description of the issue or feature
+      placeholder: What needs to be done?
+    validations:
+      required: true
+  
+  - type: checkboxes
+    id: type
+    attributes:
+      label: Type
+      options:
+        - label: Bug
+        - label: Feature
+        - label: Enhancement
+        - label: Documentation
+  
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: For bugs - what happened vs what should happen. For features - what you want to build and why.
+      placeholder: Additional context...
+    validations:
+      required: false
+  
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Any additional thoughts, links, or context
+      placeholder: Optional notes...
+    validations:
+      required: false
