@@ -1,7 +1,15 @@
 [project]
-name = "signal-sweep"
+name = "signal_sweep"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "pyyaml>=6.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+]
