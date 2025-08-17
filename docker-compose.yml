@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  redis:
+  signal-stream:
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -14,7 +14,7 @@ services:
   signal-sweep:
     build: ./signal-sweep
     depends_on:
-      - redis
+      - signal-stream
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
