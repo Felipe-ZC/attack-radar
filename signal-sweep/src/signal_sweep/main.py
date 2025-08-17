@@ -12,8 +12,12 @@ DEFAULT_BATCH_SIZE = 5
 
 
 def get_config_file_path() -> Path:
-    parser = argparse.ArgumentParser(description="The data ingestion service for attack-radar")
-    parser.add_argument("--config", help="The path to the data_sources.yml file", required=True)
+    parser = argparse.ArgumentParser(
+        description="The data ingestion service for attack-radar"
+    )
+    parser.add_argument(
+        "--config", help="The path to the data_sources.yml file", required=True
+    )
     args = parser.parse_args()
     return Path(args.config)
 
@@ -21,9 +25,15 @@ def get_config_file_path() -> Path:
 async def main(data_sources: List[Source]):
     # Process data_source...
     for idx in range(len(data_sources)):
-        next_data_sources = data_sources[idx: idx + DEFAULT_BATCH_SIZE]
-        tasks = [data_source.handler(httpx.AsyncClient).handle(data_source.url) for data_source in next_data_sources]
-        await asyncio.gather(*tasks)
+        next_data_sources = data_sources[idx : idx + DEFAULT_BATCH_SIZE]
+        tasks = [
+            data_source.handler(httpx.AsyncClient).handle(data_source.url)
+            for data_source in next_data_sources
+        ]
+        for coro in asyncio.as_completed(tasks):
+            stream_data: List[StreamData] = await coro
+            # write_stream_data to signal-stream...
+        # await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
