@@ -12,7 +12,10 @@ services:
       - app_network
 
   signal-sweep:
-    build: ./signal-sweep
+    build: 
+      context: ./signal-sweep
+      args:
+        - SWEEP_SCHEDULE=* * * * *
     depends_on:
       - signal-stream
     environment:

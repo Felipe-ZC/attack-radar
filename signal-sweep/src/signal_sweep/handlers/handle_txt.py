@@ -21,6 +21,7 @@ class TextHandler(BaseHandler):
         async with self.http_client() as client:
             response = await client.get(url)
         parsed = _parse_text(response.text)
+        print(parsed)
         return [StreamData(ip=ip, source_url=url, timestamp=int(time.time())) for ip in parsed]
 
 
