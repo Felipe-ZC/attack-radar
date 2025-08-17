@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes # Enables persistent data
+    networks:
+      - app_network
+
+  signal-sweep:
+    build: ./signal-sweep
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - app_network
+    volumes:
+      - ./data:/app/data 
+
+volumes:
+  redis_data:
+
+networks:
+  app_network:
+    driver: bridge

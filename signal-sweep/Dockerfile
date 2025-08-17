@@ -8,6 +8,7 @@ RUN pip install uv
 # Copy application code
 COPY . .
 
+# Install data ingestion script dependencies
 RUN uv sync
 
 # Run the application
