@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from ..shared.redis_stream import StreamData
+from ..shared.signal_stream import StreamData
 
 
 class BaseHandler(ABC):
