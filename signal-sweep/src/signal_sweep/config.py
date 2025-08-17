@@ -2,33 +2,13 @@
 Configuration classes and other config utilites.
 """
 
-from dataclasses import dataclass
-from enum import Enum
 from typing import List
 from pathlib import Path
 
 import yaml
 
-
-class SourceType(Enum):
-    CSV = "csv"
-    JSON = "json"
-    TXT = "txt"
-    # PARQUET = "parquet"
-    # EXCEL = "xlsx"
-    # TSV = "tsv"
-
-
-# TODO: Implement this later...
-class SourceHandler:
-    pass
-
-
-@dataclass
-class Source:
-    url: str
-    type: SourceType
-    handler: SourceHandler
+from .shared.source import Source, SourceType
+from .shared.constants import SOURCE_TYPE_TO_HANDLER_DICT
 
 
 def load_config(config_file_path: Path) -> List[Source]:
@@ -40,9 +20,9 @@ def load_config(config_file_path: Path) -> List[Source]:
     return [
         Source(
             url=source.get("url", ""),
-            type=source.get("type", ""),
+            type=SourceType(source.get("type", "")),
             # TODO: Add handler...
-            handler=SourceHandler(),
+            handler=SOURCE_TYPE_TO_HANDLER_DICT.get(SourceType(source.get("type", ""))),
         )
         for source in config_dict.get("sources", [])
     ]
