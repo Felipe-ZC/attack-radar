@@ -39,7 +39,6 @@ async def main(data_sources: List[Source], signal_stream: SignalStream):
                 for stream_data in stream_data_list
             ]
             await asyncio.gather(*write_stream_tasks)
-            # await signal_stream.write_stream_data(stream_data)
 
 
 if __name__ == "__main__":
