@@ -1,5 +1,9 @@
+import os
+
 from dataclasses import dataclass, asdict
 import redis.asyncio as redis
+
+from ..shared.logger import logger
 
 DEFAULT_STREAM_NAME = "signal-stream"
 
@@ -20,9 +24,21 @@ class SignalStream:
             stream_name = DEFAULT_STREAM_NAME
             data = asdict(stream_data)
             message_id = await self.redis_svc.xadd(stream_name, data)
-            print("wrote a new message to the stream!")
-            print(message_id)
+            logger.info(
+                "Wrote new message to singal-stream, ID is: %s", str(message_id)
+            )
         except Exception as e:
-            print(e)
+            logger.error(
+                "Error while trying to write new message to signal-stream, error is %s",
+                e,
+            )
         finally:
             await self.redis_svc.close()
+
+
+def get_redis_client() -> redis.Redis:
+    return redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=os.getenv('REDIS_PORT', 6379),
+        db=os.getenv('SIGNAL_STREAM_DB', 0)
+    )
