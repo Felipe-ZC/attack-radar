@@ -8,7 +8,7 @@ from dependency_injector.wiring import Provide, inject
 from .shared.source import Source, SourceType
 from .handlers.base_handler import BaseHandler
 from .container import ApplicationContainer
-from .shared.signal_stream import SignalStream
+from .shared.signal_stream import SignalStream, StreamData
 
 from .config import load_config
 
@@ -35,7 +35,7 @@ async def ingest_data_source(
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
 ):
     handler = handler_mapping[source.type]
-    stream_data_list: List[Source] = await handler.handle(source)
+    stream_data_list: List[StreamData] = await handler.handle(source)
     # TODO: Maybe use a batch writer instead?
     write_stream_tasks = [
         signal_stream.write_stream_data(stream_data)
@@ -55,12 +55,13 @@ async def main(
 
 async def bootstrap() -> None:
     container = ApplicationContainer()
+    
     container.config.redis_host.from_env("REDIS_HOST")
     container.config.redis_port.from_env("REDIS_PORT")
     container.config.redis_db.from_env("REDIS_DB")
+    
     container.config.max_workers.override(DEFAULT_BATCH_SIZE)
     container.config.sources.override(load_config(get_config_file_path()))
-
     container.wire(modules=[__name__])
 
     await main()
