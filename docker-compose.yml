@@ -14,12 +14,11 @@ services:
   signal-sweep:
     build: 
       context: ./signal-sweep
-      args:
-        - SWEEP_SCHEDULE=* * * * *
     depends_on:
       - signal-stream
     environment:
-      - REDIS_HOST=redis
+      - SWEEP_SCHEDULE=* * * * *
+      - REDIS_HOST=signal-stream
       - REDIS_PORT=6379
     networks:
       - app_network

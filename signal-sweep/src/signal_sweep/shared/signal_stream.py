@@ -25,18 +25,18 @@ class SignalStream:
             data = asdict(stream_data)
             message_id = await self.redis_svc.xadd(stream_name, data)
             logger.info(
-                "Wrote new message to singal-stream, ID is: %s", str(message_id)
+                "Wrote new message to singal-stream, ID is: %s",
+                str(message_id),
             )
         except Exception as e:
             logger.error(
                 "Error while trying to write new message to signal-stream, error is %s",
                 e,
             )
-        finally:
-            await self.redis_svc.close()
 
 
 def get_redis_client() -> redis.Redis:
+    print(os.environ)
     return redis.Redis(
         host=os.getenv("REDIS_HOST", "localhost"),
         port=os.getenv("REDIS_PORT", 6379),

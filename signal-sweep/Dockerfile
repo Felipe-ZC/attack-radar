@@ -1,7 +1,6 @@
-FROM python:3.11
+FROM python:3.13
 
 ARG SWEEP_SCHEDULE
-
 WORKDIR /app
 
 # Install dependencies
@@ -13,18 +12,16 @@ COPY . .
 
 # Install data ingestion script dependencies
 RUN uv sync
+RUN uv pip install -e .
 
-# Create new cron job
-RUN echo "${SWEEP_SCHEDULE} cd /app && /usr/local/bin/uv run python -m src.signal_sweep.main --config ./data_sources.yml >> /var/log/cron.log 2>&1" > /etc/cron.d/signal_sweep
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Give execution rights on the cron job
-RUN chmod 0644 /etc/cron.d/signal_sweep
+# Copy startup script
+COPY startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
 
-# Apply cron job
-RUN crontab /etc/cron.d/signal_sweep
-
-# Create the log file to be able to run tail
+# Create the log file
 RUN touch /var/log/cron.log
 
-# Start cron and your application
-CMD cron && tail -f /var/log/cron.log
+# Use startup script
+CMD ["/app/startup.sh"]

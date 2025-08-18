@@ -25,15 +25,18 @@ def load_config(config_file_path: Path) -> List[Source]:
             url=source.get("url", ""),
             type=SourceType(source.get("type", "")),
             # TODO: Add handler...
-            handler=SOURCE_TYPE_TO_HANDLER_DICT.get(SourceType(source.get("type", ""))),
+            handler=SOURCE_TYPE_TO_HANDLER_DICT.get(
+                SourceType(source.get("type", ""))
+            ),
         )
         for source in config_dict.get("sources", [])
     ]
 
 
-def get_redis_config() -> redis.Redis:
-    return redis.Redis(
-        host=os.getenv("REDIS_HOST", "localhost"),
-        port=os.getenv("REDIS_PORT", 6379),
-        db=os.getenv("SIGNAL_STREAM_DB", 0),
-    )
+# def get_redis_client() -> redis.Redis:
+#     print(os.getenv())
+#     return redis.Redis(
+#         host=os.getenv("REDIS_HOST", "localhost"),
+#         port=os.getenv("REDIS_PORT", 6379),
+#         db=os.getenv("SIGNAL_STREAM_DB", 0),
+#     )
