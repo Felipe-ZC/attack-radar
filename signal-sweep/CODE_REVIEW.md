@@ -485,6 +485,130 @@ For signal-sweep, **Option 3 (Factory Pattern)** is recommended as the immediate
 
 You can implement Option 3 first, then migrate to Option 1 or 2 when the application grows more complex.
 
+### Current Implementation vs Option 3 (Factory Pattern)
+
+#### Current Implementation Issues
+
+**1. Direct Handler Instantiation with Dependency Parameters**
+
+Currently in `src/signal_sweep/main.py:44`, handlers are instantiated directly with all dependencies passed as constructor parameters:
+
+```python
+handler(data_source, http_client, process_executor).handle()
+```
+
+**Problems:**
+- Each handler constructor requires knowledge of all its dependencies upfront
+- The `main()` function must know about every handler's specific requirements
+- Handler constructors like `TextHandler.__init__()` in `src/signal_sweep/handlers/handle_txt.py:34-42` are tightly coupled to specific dependency types
+- No abstraction layer between dependency creation and usage
+
+**2. Manual Dependency Threading**
+
+The current `main()` function signature manually threads dependencies through multiple layers:
+
+```python
+async def main(
+    data_sources: List[Source],
+    http_client: httpx.AsyncClient,
+    process_executor: AsyncProcessPoolExecutor,
+    signal_stream: SignalStream,
+) -> None:
+```
+
+**Problems:**
+- Every function in the call chain must know about dependencies it doesn't directly use
+- Adding new dependencies requires modifying multiple function signatures
+- No centralized dependency management
+
+**3. Handler-Specific Dependency Knowledge**
+
+In `src/signal_sweep/handlers/handle_txt.py:34-42`, the `TextHandler` constructor hardcodes what dependencies it needs:
+
+```python
+def __init__(
+    self,
+    data_source: Source,
+    http_client: httpx.AsyncClient,
+    process_executor: ProcessPoolExecutor,
+):
+```
+
+**Problems:**
+- Handler is coupled to concrete dependency types
+- Cannot easily swap implementations for testing
+- Each handler must manage its own dependency state
+
+#### How Option 3 (Factory Pattern) Solves These Issues
+
+**1. Encapsulated Dependency Creation**
+
+Instead of direct instantiation, factories encapsulate how handlers are created:
+
+```python
+# Current problematic approach
+handler(data_source, http_client, process_executor).handle()
+
+# Factory pattern approach
+handler = await deps.handler_factory.create_text_handler()
+```
+
+**Benefits:**
+- The main loop doesn't need to know handler construction details
+- Handler creation logic is centralized in factories
+- Easy to change how handlers are constructed without affecting calling code
+
+**2. Dependency Abstraction**
+
+Factories hide dependency management behind clean interfaces:
+
+```python
+# Current: main() must know about all dependencies
+async def main(data_sources, http_client, process_executor, signal_stream):
+
+# Factory pattern: main() only knows about high-level dependencies
+async def main(data_sources: List[Source], deps: Dependencies):
+```
+
+**Benefits:**
+- Cleaner function signatures
+- Dependencies are grouped logically
+- Adding new dependencies doesn't break existing code
+
+**3. Handler Constructor Simplification**
+
+Handlers can focus on their core logic rather than dependency management:
+
+```python
+# Current: Constructor is coupled to specific dependency types
+class TextHandler:
+    def __init__(self, data_source, http_client, process_executor):
+        # Handler must manage multiple dependencies
+
+# Factory pattern: Handler focuses on its behavior
+class TextHandler:
+    def __init__(self, http_client, process_executor):
+        # Simplified constructor, data_source passed to methods
+```
+
+**Benefits:**
+- Handlers become more focused and testable
+- Easier to mock dependencies for unit tests
+- Clear separation between configuration and behavior
+
+#### Key Differences Summary
+
+| Aspect | Current Implementation | Option 3 (Factory Pattern) |
+|--------|----------------------|---------------------------|
+| **Handler Creation** | Direct instantiation with parameters | Factory-mediated creation |
+| **Dependency Flow** | Manual parameter threading | Encapsulated in factory/dependencies object |
+| **Constructor Coupling** | Tightly coupled to specific types | Focused on core dependencies |
+| **Testing** | Must mock constructor parameters | Mock factory methods |
+| **Extensibility** | Must modify multiple layers | Add new factory methods |
+| **Maintainability** | Changes ripple through call chain | Changes isolated to factories |
+
+The factory pattern maintains your current architecture while providing better abstraction and testability without the complexity of a full DI container.
+
 ### Benefits of Proper DI
 - **Testability**: Easy mocking and unit testing
 - **Maintainability**: Clear dependency relationships
