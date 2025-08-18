@@ -62,17 +62,6 @@ class TextHandler(BaseHandler):
             for ip in parsed
         ]
 
-    # async def handle(self, url: str) -> List[StreamData]:
-    #     async with self.http_client() as client:
-    #         response = await client.get(url)
-    #     parsed = _parse_text(response.text)
-    #     print(parsed)
-    #     return [
-    #         StreamData(ip=ip, source_url=url, timestamp=int(time.time()))
-    #         for ip in parsed
-    #     ]
-    #
-
 
 # TODO: Regex parsing is a CPU intensive task, I don't know how big these text files can get but
 # we should run this _parse_text function in a ProcessPoolExecutor to avoid blocking other async calls

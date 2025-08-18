@@ -35,7 +35,7 @@ async def main(
 ) -> None:
     # Process data_source...
     for idx in range(0, len(data_sources), DEFAULT_BATCH_SIZE):
-        next_data_sources = data_sources[idx: idx + DEFAULT_BATCH_SIZE]
+        next_data_sources = data_sources[idx : idx + DEFAULT_BATCH_SIZE]
         handlers = [
             SOURCE_TYPE_TO_HANDLER_DICT[data_source.type]
             for data_source in next_data_sources

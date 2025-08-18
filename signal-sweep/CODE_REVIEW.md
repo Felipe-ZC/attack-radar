@@ -3,6 +3,14 @@
 ## Project Overview
 Signal-sweep is a data ingestion service that fetches IP addresses from threat intelligence sources and writes them to a Redis stream for downstream processing. The service is part of a larger cybersecurity monitoring system designed to track and visualize cyberattack origins.
 
+## Recent Improvements (Since Last Review)
+
+### Architectural Enhancements
+- **Context Manager Adoption** in `src/signal_sweep/main.py:60-67` - Proper resource management for HTTP client, Redis client, and ProcessPoolExecutor
+- **Python Version Alignment** - Dockerfile now uses Python 3.13, matching pyproject.toml requirements
+- **Code Cleanup** - Removed debug statements and commented Redis client code from config.py
+- **ProcessPoolExecutor Integration** - Fixed implementation in `src/signal_sweep/handlers/handle_txt.py:52-54`
+
 ## Architecture & Design
 
 ### Strengths
@@ -11,6 +19,8 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 - Configurable data sources via YAML
 - Proper use of Redis streams for event-driven architecture
 - Docker containerization with cron scheduling
+- **NEW**: Proper context manager usage for resource cleanup
+- **NEW**: AsyncProcessPoolExecutor wrapper for better async integration
 
 ### Areas for Improvement
 - Tight coupling between handlers and HTTP clients
@@ -21,22 +31,17 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 
 ### Critical Issues
 
-1. **Resource Leak** in `src/signal_sweep/shared/signal_stream.py:36`
-   - Redis connection closed after every write, causing connection overhead
-   - Should use connection pooling or reuse connections
+1. **Debug Print Statement** in `src/signal_sweep/handlers/handle_txt.py:55`
+   - Production code contains `print(parsed)` statement
+   - Should use proper logging instead
 
-2. **Blocking Regex** in `src/signal_sweep/handlers/handle_txt.py:34`
-   - CPU-intensive regex parsing blocks async event loop
-   - TODO comment acknowledges this issue
-   - Should use ProcessPoolExecutor as suggested
-
-3. **Incorrect HTTP Client Usage** in `src/signal_sweep/handlers/handle_txt.py:22`
-   - `self.http_client()` calls constructor instead of using instance
-   - Should be `self.http_client` without parentheses
+2. **Typo in Log Message** in `src/signal_sweep/shared/signal_stream.py:28`
+   - "singal-stream" should be "signal-stream"
+   - Affects log readability and monitoring
 
 ### Type Safety
-- Missing type hints for environment variables in `src/signal_sweep/config.py:35-39`
-- Inconsistent return type annotations
+- Consistent type hints throughout the codebase
+- Good use of dataclasses for structured data (StreamData)
 - Missing validation for configuration data
 
 ### Error Handling
@@ -47,9 +52,10 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 ## Security Considerations
 
 ### Positive Security Aspects
-- Fetches data from legitimate threat intelligence sources
+- Fetches data from legitimate threat intelligence sources (emergingthreats.net)
 - Uses environment variables for sensitive configuration
 - No hardcoded credentials or secrets
+- **NEW**: Proper resource cleanup prevents connection leaks
 
 ### Security Concerns
 
@@ -63,66 +69,95 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 3. **Missing TLS Verification**
    - No explicit HTTPS enforcement for external requests
 
-4. **Dockerfile Version Pinning**
-   - Uses `python:3.11` instead of specific patch version
+## Performance Analysis
 
-## Performance Issues
-- Redis connections not pooled or reused
-- Synchronous regex processing in async context
+### Improvements Made
+- **Context Managers**: Proper resource cleanup prevents memory/connection leaks
+- **ProcessPoolExecutor**: CPU-intensive regex parsing now runs in separate processes
+- **Redis Connection Pooling**: redis.Redis() automatically manages connection pools (no issue here)
+
+### Remaining Performance Considerations
 - No batch processing limits for large data sources
-- Fixed batch size may not be optimal for all scenarios
+- Fixed batch size (5) may not be optimal for all scenarios
 
 ## Configuration & Environment
-- Python version mismatch: `pyproject.toml` requires >=3.13 but Dockerfile uses 3.11
+
+### Fixed Issues
+- ✅ **Python Version Alignment**: Dockerfile now uses Python 3.13 matching pyproject.toml
+- ✅ **Clean Configuration**: Removed debug code and unused imports from config.py
+
+### Remaining Issues
 - Missing development dependencies (testing, linting)
 - Hardcoded constants that should be configurable
 
 ## Recommendations
 
 ### High Priority
-1. Fix Redis connection management in `SignalStream.write_stream_data()`
-2. Implement ProcessPoolExecutor for regex parsing as noted in TODO
-3. Correct HTTP client usage in `TextHandler`
-4. Add URL validation and HTTPS enforcement
+1. Remove debug print statement in `TextHandler.process()` 
+2. Fix typo in log message ("singal-stream" → "signal-stream")
+3. Add URL validation and HTTPS enforcement
+4. Implement retry logic for network failures
 
 ### Medium Priority
 1. Implement proper dependency injection
-2. Add comprehensive error handling with retries
-3. Use connection pooling for Redis
-4. Pin exact Python version in Dockerfile
+2. Add comprehensive error handling with specific exception types
+3. Add configuration validation
+4. Implement rate limiting for external requests
 
 ### Low Priority
-1. Add type hints throughout codebase
-2. Implement configuration validation
-3. Add development dependencies for testing
-4. Consider using structured logging
+1. Add development dependencies for testing and linting
+2. Make batch size configurable
+3. Consider using structured logging throughout
+4. Add input validation for IP parsing results
 
 ## Overall Assessment
-The codebase demonstrates good architectural thinking with async patterns and proper separation of concerns. However, it contains several critical bugs that would prevent proper operation in production. The security posture is reasonable for a defensive tool, but improvements in input validation and network security are needed.
+The codebase has shown significant improvement with the adoption of context managers and proper resource management. The architecture demonstrates good separation of concerns and async patterns. The ProcessPoolExecutor integration properly addresses CPU-intensive operations. While minor issues remain (debug prints, typos), the core functionality is now more robust and production-ready. The security posture is appropriate for a defensive cybersecurity tool.
 
 ## File-Specific Issues
 
 ### `src/signal_sweep/main.py`
-- Line 32: HTTP client instantiation should be moved outside the loop for reuse
-- Line 26: TODO comment about dependency injection should be addressed
+- ✅ **FIXED**: HTTP client now properly managed with context manager
+- Line 28-29: TODO comments about dependency injection remain (medium priority)
+- Line 65: Debug print statement for Redis client should be removed
 
 ### `src/signal_sweep/config.py`
-- Lines 35-39: Environment variable types should be validated and converted properly
+- ✅ **FIXED**: Cleaned up unused imports and commented code
 - Missing error handling for file operations
+- Missing validation for configuration data structure
 
 ### `src/signal_sweep/shared/signal_stream.py`
-- Line 36: Redis connection closure causes resource overhead
+- ✅ **CORRECTED**: Redis connection pooling is automatically handled by redis.Redis()
 - Line 28: Typo in log message "singal-stream" should be "signal-stream"
 
 ### `src/signal_sweep/handlers/handle_txt.py`
-- Line 22: Incorrect HTTP client usage
-- Line 25: Debug print statement should be removed or use proper logging
-- Line 34: Regex parsing should be moved to separate process
+- ✅ **FIXED**: ProcessPoolExecutor now properly integrated with async execution
+- Line 55: Debug print statement should be removed or use proper logging
+- Good separation of fetch/process concerns
+
+### `src/signal_sweep/shared/utils.py`
+- **NEW**: AsyncProcessPoolExecutor wrapper provides clean async integration
+- Proper context manager implementation for resource cleanup
 
 ### `src/signal_sweep/shared/logger.py`
 - Line 26: Default logger name "pybiztools" doesn't match project name
 - Line 53: Log file size (1024 bytes) is too small for production use
 
 ### `Dockerfile`
-- Line 1: Should pin specific Python version (e.g., `python:3.13.1`)
+- ✅ **FIXED**: Now uses Python 3.13 matching pyproject.toml
+- Consider pinning to specific patch version (e.g., `python:3.13.1`)
 - Missing security updates for apt packages
+
+## Updated Priority Assessment
+
+### Issues Resolved ✅
+1. Python version mismatch between Dockerfile and pyproject.toml
+2. ProcessPoolExecutor implementation for CPU-intensive operations
+3. Context manager adoption for proper resource management
+4. Code cleanup removing debug prints from config.py
+
+### Current High Priority Issues
+1. Debug print in `handle_txt.py:55`
+2. Typo in log message `signal_stream.py:28`
+3. Debug print in `main.py:65`
+
+The codebase quality has improved significantly with proper async patterns and resource management.
