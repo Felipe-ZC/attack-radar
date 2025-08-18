@@ -110,6 +110,67 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 3. Consider using structured logging throughout
 4. Add input validation for IP parsing results
 
+## Dependency Injection Analysis
+
+### Current Implementation Issues
+
+The codebase currently uses **manual dependency passing** rather than proper dependency injection, which creates several architectural problems:
+
+#### 1. Manual Dependency Passing
+In `src/signal_sweep/main.py:30-35`, dependencies are manually passed through function parameters:
+```python
+async def main(
+    data_sources: List[Source],
+    http_client: httpx.AsyncClient,
+    process_executor: AsyncProcessPoolExecutor,
+    signal_stream: SignalStream,
+) -> None:
+```
+
+**Problems:**
+- **Tight coupling**: Each handler must know about all dependencies it might need
+- **Parameter drilling**: Dependencies are passed through multiple layers
+- **No lifecycle management**: No central control over dependency creation/destruction
+- **Hard to test**: Difficult to mock dependencies for unit testing
+
+#### 2. Direct Instantiation in Handler Factory
+In `src/signal_sweep/main.py:44`, handlers are instantiated directly:
+```python
+handler(data_source, http_client, process_executor).handle()
+```
+
+**Violations of DI principles:**
+- **No inversion of control**: The caller creates dependencies rather than receiving them
+- **Hard-coded dependencies**: Each handler constructor hardcodes what it needs (`src/signal_sweep/handlers/handle_txt.py:34-42`)
+- **No interface abstraction**: Handlers depend on concrete implementations
+
+#### 3. Scattered Resource Management
+While `bootstrap()` uses context managers for resource cleanup (`src/signal_sweep/main.py:60-67`), the dependency wiring is still manual and scattered across the codebase.
+
+### Recommended Dependency Injection Solutions
+
+#### Option 1: Full DI Container (Recommended)
+Use the `dependency-injector` library for complete DI functionality:
+```python
+# Example implementation
+container.register(httpx.AsyncClient, scope="singleton")
+container.register(SignalStream, dependencies=[Redis])
+container.register(TextHandler, dependencies=[HttpClient, ProcessExecutor])
+```
+
+#### Option 2: Custom Lightweight DI
+Implement a simple container for this specific use case with automatic wiring and lifecycle management.
+
+#### Option 3: Factory Pattern (Intermediate Step)
+Create handler factories that encapsulate dependency creation, reducing coupling while maintaining current architecture.
+
+### Benefits of Proper DI
+- **Testability**: Easy mocking and unit testing
+- **Maintainability**: Clear dependency relationships
+- **Extensibility**: Easy to add new handlers and services
+- **Resource management**: Centralized lifecycle control
+- **Interface-based design**: Depend on abstractions, not concretions
+
 ## Overall Assessment
 The codebase has shown significant improvement with the adoption of context managers and proper resource management. The architecture demonstrates good separation of concerns and async patterns. The ProcessPoolExecutor integration properly addresses CPU-intensive operations. While minor issues remain (debug prints, typos), the core functionality is now more robust and production-ready. The security posture is appropriate for a defensive cybersecurity tool.
 
