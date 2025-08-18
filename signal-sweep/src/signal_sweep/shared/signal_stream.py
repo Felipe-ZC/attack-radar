@@ -36,7 +36,6 @@ class SignalStream:
 
 
 def get_redis_client() -> redis.Redis:
-    print(os.environ)
     return redis.Redis(
         host=os.getenv("REDIS_HOST", "localhost"),
         port=os.getenv("REDIS_PORT", 6379),
