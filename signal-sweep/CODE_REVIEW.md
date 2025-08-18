@@ -149,20 +149,341 @@ While `bootstrap()` uses context managers for resource cleanup (`src/signal_swee
 
 ### Recommended Dependency Injection Solutions
 
-#### Option 1: Full DI Container (Recommended)
+#### Option 1: Full DI Container (Recommended for Complex Applications)
+
+**Best For**: Complex applications with many dependencies and multiple environments
+
 Use the `dependency-injector` library for complete DI functionality:
+
 ```python
-# Example implementation
-container.register(httpx.AsyncClient, scope="singleton")
-container.register(SignalStream, dependencies=[Redis])
-container.register(TextHandler, dependencies=[HttpClient, ProcessExecutor])
+# pyproject.toml
+dependencies = [
+    "dependency-injector>=4.41.0",
+    # ... existing dependencies
+]
+```
+
+```python
+# src/signal_sweep/container.py
+from dependency_injector import containers, providers
+from dependency_injector.wiring import Provide, inject
+import httpx
+import redis.asyncio as redis
+from .shared.signal_stream import SignalStream
+from .shared.utils import AsyncProcessPoolExecutor
+from .handlers.handle_txt import TextHandler
+
+class ApplicationContainer(containers.DeclarativeContainer):
+    # Configuration
+    config = providers.Configuration()
+    
+    # External services
+    redis_client = providers.Singleton(
+        redis.Redis,
+        host=config.redis.host,
+        port=config.redis.port,
+        db=config.redis.db,
+        decode_responses=True
+    )
+    
+    http_client = providers.Singleton(
+        httpx.AsyncClient,
+        timeout=30.0
+    )
+    
+    process_executor = providers.Singleton(
+        AsyncProcessPoolExecutor,
+        max_workers=config.processing.max_workers.as_int()
+    )
+    
+    # Application services
+    signal_stream = providers.Factory(
+        SignalStream,
+        redis_client=redis_client
+    )
+    
+    # Handlers
+    text_handler = providers.Factory(
+        TextHandler,
+        http_client=http_client,
+        process_executor=process_executor
+    )
+```
+
+```python
+# src/signal_sweep/main.py
+from dependency_injector.wiring import Provide, inject
+from .container import ApplicationContainer
+
+@inject
+async def process_source(
+    source: Source,
+    text_handler: TextHandler = Provide[ApplicationContainer.text_handler],
+    signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream]
+) -> None:
+    if source.format == "txt":
+        results = await text_handler.process(source)
+        await signal_stream.write_bulk(results)
+
+@inject
+async def main(
+    data_sources: List[Source] = Provide[ApplicationContainer.config.data_sources]
+) -> None:
+    tasks = [process_source(source) for source in data_sources]
+    await asyncio.gather(*tasks)
+
+async def bootstrap() -> None:
+    container = ApplicationContainer()
+    container.config.from_yaml("config.yml")
+    container.wire(modules=[__name__])
+    
+    try:
+        await main()
+    finally:
+        await container.shutdown_resources()
 ```
 
 #### Option 2: Custom Lightweight DI
-Implement a simple container for this specific use case with automatic wiring and lifecycle management.
+
+**Best For**: Simple applications wanting DI benefits without external dependencies
+
+```python
+# src/signal_sweep/di/container.py
+from typing import Dict, Any, TypeVar, Type, Callable
+import asyncio
+from contextlib import AsyncExitStack
+
+T = TypeVar('T')
+
+class DIContainer:
+    def __init__(self):
+        self._factories: Dict[Type, Callable] = {}
+        self._singletons: Dict[Type, Any] = {}
+        self._exit_stack = AsyncExitStack()
+    
+    def register_factory(self, interface: Type[T], factory: Callable[[], T]) -> None:
+        """Register a factory function for a type"""
+        self._factories[interface] = factory
+    
+    def register_singleton(self, interface: Type[T], factory: Callable[[], T]) -> None:
+        """Register a singleton factory"""
+        self._factories[interface] = factory
+        self._singletons[interface] = None
+    
+    async def get(self, interface: Type[T]) -> T:
+        """Get an instance of the requested type"""
+        if interface in self._singletons:
+            if self._singletons[interface] is None:
+                instance = await self._create_instance(interface)
+                self._singletons[interface] = instance
+            return self._singletons[interface]
+        
+        return await self._create_instance(interface)
+    
+    async def _create_instance(self, interface: Type[T]) -> T:
+        if interface not in self._factories:
+            raise ValueError(f"No factory registered for {interface}")
+        
+        factory = self._factories[interface]
+        instance = factory()
+        
+        # If it's an async context manager, enter it
+        if hasattr(instance, '__aenter__'):
+            instance = await self._exit_stack.enter_async_context(instance)
+        
+        return instance
+    
+    async def cleanup(self):
+        """Clean up all resources"""
+        await self._exit_stack.aclose()
+```
+
+```python
+# src/signal_sweep/di/setup.py
+import httpx
+import redis.asyncio as redis
+from .container import DIContainer
+from ..shared.signal_stream import SignalStream
+from ..shared.utils import AsyncProcessPoolExecutor
+from ..handlers.handle_txt import TextHandler
+from ..config import config
+
+async def setup_container() -> DIContainer:
+    container = DIContainer()
+    
+    # Register singletons
+    container.register_singleton(
+        httpx.AsyncClient,
+        lambda: httpx.AsyncClient(timeout=30.0)
+    )
+    
+    container.register_singleton(
+        redis.Redis,
+        lambda: redis.Redis(
+            host=config.redis_host,
+            port=config.redis_port,
+            decode_responses=True
+        )
+    )
+    
+    container.register_singleton(
+        AsyncProcessPoolExecutor,
+        lambda: AsyncProcessPoolExecutor(max_workers=4)
+    )
+    
+    # Register factories
+    container.register_factory(
+        SignalStream,
+        lambda: SignalStream(container.get(redis.Redis))
+    )
+    
+    container.register_factory(
+        TextHandler,
+        lambda: TextHandler(
+            http_client=container.get(httpx.AsyncClient),
+            process_executor=container.get(AsyncProcessPoolExecutor)
+        )
+    )
+    
+    return container
+```
+
+```python
+# src/signal_sweep/main.py
+from .di.setup import setup_container
+from .handlers.handle_txt import TextHandler
+from .shared.signal_stream import SignalStream
+
+async def process_source(source: Source, container: DIContainer) -> None:
+    if source.format == "txt":
+        handler = await container.get(TextHandler)
+        signal_stream = await container.get(SignalStream)
+        
+        results = await handler.process(source)
+        await signal_stream.write_bulk(results)
+
+async def main(data_sources: List[Source], container: DIContainer) -> None:
+    tasks = [process_source(source, container) for source in data_sources]
+    await asyncio.gather(*tasks)
+
+async def bootstrap() -> None:
+    container = await setup_container()
+    data_sources = load_data_sources()
+    
+    try:
+        await main(data_sources, container)
+    finally:
+        await container.cleanup()
+```
 
 #### Option 3: Factory Pattern (Intermediate Step)
-Create handler factories that encapsulate dependency creation, reducing coupling while maintaining current architecture.
+
+**Best For**: Gradual refactoring without major architectural changes
+
+```python
+# src/signal_sweep/factories/handler_factory.py
+from typing import Protocol
+import httpx
+from ..shared.utils import AsyncProcessPoolExecutor
+from ..handlers.handle_txt import TextHandler
+
+class HandlerFactory(Protocol):
+    async def create_text_handler(self) -> TextHandler: ...
+
+class DefaultHandlerFactory:
+    def __init__(
+        self,
+        http_client: httpx.AsyncClient,
+        process_executor: AsyncProcessPoolExecutor
+    ):
+        self._http_client = http_client
+        self._process_executor = process_executor
+    
+    async def create_text_handler(self) -> TextHandler:
+        return TextHandler(
+            http_client=self._http_client,
+            process_executor=self._process_executor
+        )
+```
+
+```python
+# src/signal_sweep/factories/service_factory.py
+import redis.asyncio as redis
+from ..shared.signal_stream import SignalStream
+from ..config import config
+
+class ServiceFactory:
+    def __init__(self, redis_client: redis.Redis):
+        self._redis_client = redis_client
+    
+    def create_signal_stream(self) -> SignalStream:
+        return SignalStream(self._redis_client)
+```
+
+```python
+# src/signal_sweep/main.py
+from .factories.handler_factory import DefaultHandlerFactory
+from .factories.service_factory import ServiceFactory
+
+class Dependencies:
+    def __init__(
+        self,
+        handler_factory: HandlerFactory,
+        service_factory: ServiceFactory
+    ):
+        self.handler_factory = handler_factory
+        self.service_factory = service_factory
+
+async def process_source(source: Source, deps: Dependencies) -> None:
+    if source.format == "txt":
+        handler = await deps.handler_factory.create_text_handler()
+        signal_stream = deps.service_factory.create_signal_stream()
+        
+        results = await handler.process(source)
+        await signal_stream.write_bulk(results)
+
+async def main(data_sources: List[Source], deps: Dependencies) -> None:
+    tasks = [process_source(source, deps) for source in data_sources]
+    await asyncio.gather(*tasks)
+
+async def bootstrap() -> None:
+    data_sources = load_data_sources()
+    
+    async with (
+        httpx.AsyncClient(timeout=30.0) as http_client,
+        redis.asyncio.Redis(host=config.redis_host, port=config.redis_port) as redis_client,
+        AsyncProcessPoolExecutor(max_workers=4) as process_executor
+    ):
+        # Create factories
+        handler_factory = DefaultHandlerFactory(http_client, process_executor)
+        service_factory = ServiceFactory(redis_client)
+        deps = Dependencies(handler_factory, service_factory)
+        
+        await main(data_sources, deps)
+```
+
+#### Benefits Comparison
+
+| Aspect | Option 1 (Full DI) | Option 2 (Custom DI) | Option 3 (Factories) |
+|--------|-------------------|---------------------|----------------------|
+| **Complexity** | High | Medium | Low |
+| **Learning Curve** | Steep | Moderate | Minimal |
+| **Testability** | Excellent | Good | Better than current |
+| **Flexibility** | Highest | High | Medium |
+| **Resource Management** | Automatic | Manual but structured | Manual |
+| **External Dependencies** | Yes | No | No |
+| **Refactoring Effort** | High | Medium | Low |
+
+#### Recommendation for Signal-Sweep
+
+For signal-sweep, **Option 3 (Factory Pattern)** is recommended as the immediate next step because:
+
+1. **Low risk** - Minimal changes to existing working code
+2. **Gradual improvement** - Can evolve to full DI later
+3. **Better testability** - Easier to mock factories than direct instantiation
+4. **Maintains current architecture** - Works with existing context managers
+
+You can implement Option 3 first, then migrate to Option 1 or 2 when the application grows more complex.
 
 ### Benefits of Proper DI
 - **Testability**: Easy mocking and unit testing
