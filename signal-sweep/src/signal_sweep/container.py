@@ -13,7 +13,6 @@ from .handlers.handle_txt import TextHandler
 class ApplicationContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
-    # Services...
     redis_client = providers.Singleton(
         redis.Redis,
         host=config.redis_host,
@@ -21,15 +20,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
         db=config.redis_db,
         decode_responses=True,
     )
-
     http_client = providers.Singleton(httpx.AsyncClient, timeout=30.0)
-
     process_executor = providers.Singleton(
         AsyncProcessPoolExecutor, max_workers=config.max_workers
     )
 
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
-
     text_handler = providers.Factory(
         TextHandler, http_client=http_client, process_executor=process_executor
     )

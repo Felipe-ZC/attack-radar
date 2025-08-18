@@ -6,7 +6,7 @@ from typing import List, Dict
 from dependency_injector.wiring import Provide, inject
 
 from .shared.source import Source, SourceType
-from .handlers.base_handler import BaseHandler
+from .handlers.base_handler import Handler
 from .container import ApplicationContainer
 from .shared.signal_stream import SignalStream, StreamData
 
@@ -29,7 +29,7 @@ def get_config_file_path() -> Path:
 @inject
 async def ingest_data_source(
     source: Source,
-    handler_mapping: Dict[SourceType, BaseHandler] = Provide[
+    handler_mapping: Dict[SourceType, Handler] = Provide[
         ApplicationContainer.handler_mapping
     ],
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
@@ -55,11 +55,11 @@ async def main(
 
 async def bootstrap() -> None:
     container = ApplicationContainer()
-    
+
     container.config.redis_host.from_env("REDIS_HOST")
     container.config.redis_port.from_env("REDIS_PORT")
     container.config.redis_db.from_env("REDIS_DB")
-    
+
     container.config.max_workers.override(DEFAULT_BATCH_SIZE)
     container.config.sources.override(load_config(get_config_file_path()))
     container.wire(modules=[__name__])

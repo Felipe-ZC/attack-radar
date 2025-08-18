@@ -198,7 +198,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 @inject
 async def ingest_data_source(
     source: Source,
-    handler_mapping: Dict[SourceType, BaseHandler] = Provide[ApplicationContainer.handler_mapping],
+    handler_mapping: Dict[SourceType, Handler] = Provide[ApplicationContainer.handler_mapping],
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
 ):
     handler = handler_mapping[source.type]

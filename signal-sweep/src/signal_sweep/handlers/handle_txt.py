@@ -11,7 +11,7 @@ import re
 
 import httpx
 
-from .base_handler import BaseHandler
+from .base_handler import Handler
 from ..shared.signal_stream import StreamData
 from ..shared.source import Source
 
@@ -30,7 +30,7 @@ process(fetch(source.url))
 """
 
 
-class TextHandler(BaseHandler):
+class TextHandler(Handler):
     def __init__(
         self,
         http_client: httpx.AsyncClient,
