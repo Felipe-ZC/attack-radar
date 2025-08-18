@@ -3,51 +3,85 @@
 ## Project Overview
 Signal-sweep is a data ingestion service that fetches IP addresses from threat intelligence sources and writes them to a Redis stream for downstream processing. The service is part of a larger cybersecurity monitoring system designed to track and visualize cyberattack origins.
 
-## Recent Improvements (Since Last Review)
+## Major Changes Since Last Review
 
-### Architectural Enhancements
-- **Context Manager Adoption** in `src/signal_sweep/main.py:60-67` - Proper resource management for HTTP client, Redis client, and ProcessPoolExecutor
-- **Python Version Alignment** - Dockerfile now uses Python 3.13, matching pyproject.toml requirements
-- **Code Cleanup** - Removed debug statements and commented Redis client code from config.py
-- **ProcessPoolExecutor Integration** - Fixed implementation in `src/signal_sweep/handlers/handle_txt.py:52-54`
+### ✅ COMPLETE DEPENDENCY INJECTION IMPLEMENTATION
+
+The codebase has undergone a **major architectural transformation** implementing **Option 1: Full DI Container** with the `dependency-injector` library:
+
+#### New Architecture Components
+
+**1. Dependency Injection Container** (`src/signal_sweep/container.py`)
+- Complete DI container using `dependency-injector` library
+- Singleton pattern for shared resources (HTTP client, Redis client, ProcessPoolExecutor)
+- Factory pattern for per-request services (SignalStream, handlers)
+- Configuration-driven dependency resolution
+
+**2. Refactored Main Module** (`src/signal_sweep/main.py`)
+- `@inject` decorators for automatic dependency injection
+- Clean separation of concerns with `ingest_data_source()` function
+- Elimination of manual dependency threading
+- Configuration-driven data source loading
+
+**3. Handler Simplification** (`src/signal_sweep/handlers/handle_txt.py`)
+- Simplified constructor removing `data_source` parameter
+- `data_source` now passed to `handle()` method for better separation
+- Proper ProcessPoolExecutor integration via `.executor` attribute
+
+**4. Updated Dependencies** (`pyproject.toml`)
+- Added `dependency-injector>=4.48.1` 
+- Development dependencies with `black>=25.1.0` for code formatting
+
+### Legacy Code Cleanup
+- **Removed**: Old manual dependency passing patterns
+- **Deprecated**: `src/signal_sweep/shared/constants.py` - handler mapping now in DI container
+- **Updated**: Handler instantiation pattern completely replaced
 
 ## Architecture & Design
 
-### Strengths
-- Clean separation of concerns with handlers for different data types
-- Async/await pattern for concurrent processing  
-- Configurable data sources via YAML
-- Proper use of Redis streams for event-driven architecture
-- Docker containerization with cron scheduling
-- **NEW**: Proper context manager usage for resource cleanup
-- **NEW**: AsyncProcessPoolExecutor wrapper for better async integration
+### Major Strengths ✅
+- **Professional DI Architecture**: Complete dependency injection with `dependency-injector` library
+- **Separation of Concerns**: Clean handler abstraction with proper lifecycle management
+- **Resource Management**: Singleton pattern for shared resources, automatic cleanup
+- **Async/Await Excellence**: Proper concurrent processing with async patterns
+- **Configuration-Driven**: YAML-based data source configuration with environment variable support
+- **Redis Streams**: Event-driven architecture for downstream processing
+- **Type Safety**: Comprehensive type hints and dataclass usage
+- **Modern Python**: Python 3.13 with latest async features
 
-### Areas for Improvement
-- Tight coupling between handlers and HTTP clients
-- Missing dependency injection framework
-- Limited error handling and retry mechanisms
+### Remaining Areas for Improvement
+- Limited error handling and retry mechanisms for network failures
+- No input validation for external data sources
+- Batch processing could be more configurable
 
 ## Code Quality Issues
 
-### Critical Issues
+### Critical Issues 🚨
 
-1. **Debug Print Statement** in `src/signal_sweep/handlers/handle_txt.py:55`
-   - Production code contains `print(parsed)` statement
-   - Should use proper logging instead
+1. **Debug Print Statements** - Multiple locations still contain debug prints:
+   - `src/signal_sweep/handlers/handle_txt.py:47` - `print(parsed)`
+   - `src/signal_sweep/shared/signal_stream.py:26-27` - `print(stream_name, data)` and `print(self.redis_client)`
+   - Should use proper logging instead of print statements
 
-2. **Typo in Log Message** in `src/signal_sweep/shared/signal_stream.py:28`
-   - "singal-stream" should be "signal-stream"
+2. **Typo in Log Message** in `src/signal_sweep/shared/signal_stream.py:30`
+   - "singal-stream" should be "signal-stream" 
    - Affects log readability and monitoring
 
-### Type Safety
-- Consistent type hints throughout the codebase
-- Good use of dataclasses for structured data (StreamData)
-- Missing validation for configuration data
+3. **Outdated TODO Comments** - Several TODOs reference old patterns:
+   - `src/signal_sweep/handlers/handle_txt.py:58-59` - References ProcessPoolExecutor (now implemented)
+   - `src/signal_sweep/config.py:24` - Generic TODO about error handling
+
+### Type Safety ✅
+- **Excellent**: Comprehensive type hints throughout the codebase
+- **Good**: Proper use of dataclasses for structured data (StreamData)
+- **Good**: DI container provides type-safe dependency resolution
+- **Missing**: Validation for configuration data and external inputs
 
 ### Error Handling
-- Generic exception catching without specific error types
-- No retry logic for network failures
-- Missing validation for IP address parsing results
+- **Improved**: Better exception handling in SignalStream with proper logging
+- **Missing**: No retry logic for network failures
+- **Missing**: Input validation for IP address parsing results
+- **Missing**: Graceful handling of malformed data sources
 
 ## Security Considerations
 
@@ -92,60 +126,85 @@ Signal-sweep is a data ingestion service that fetches IP addresses from threat i
 
 ## Recommendations
 
-### High Priority
-1. Remove debug print statement in `TextHandler.process()` 
-2. Fix typo in log message ("singal-stream" → "signal-stream")
-3. Add URL validation and HTTPS enforcement
-4. Implement retry logic for network failures
+### High Priority 🚨
+1. **Remove all debug print statements** from production code:
+   - `src/signal_sweep/handlers/handle_txt.py:47`
+   - `src/signal_sweep/shared/signal_stream.py:26-27`
+2. **Fix typo** in log message ("singal-stream" → "signal-stream") in `src/signal_sweep/shared/signal_stream.py:30`
+3. **Clean up outdated TODO comments** that reference implemented features
 
-### Medium Priority
-1. Implement proper dependency injection
-2. Add comprehensive error handling with specific exception types
-3. Add configuration validation
-4. Implement rate limiting for external requests
+### Medium Priority 
+1. **Add URL validation and HTTPS enforcement** for external data sources
+2. **Implement retry logic** for network failures with exponential backoff
+3. **Add configuration validation** for YAML data sources
+4. **Implement rate limiting** for external requests to prevent DoS
 
 ### Low Priority
-1. Add development dependencies for testing and linting
-2. Make batch size configurable
-3. Consider using structured logging throughout
-4. Add input validation for IP parsing results
+1. **Add comprehensive testing** infrastructure with pytest
+2. **Make batch processing configurable** via environment variables  
+3. **Add input validation** for IP parsing results
+4. **Consider structured logging** with JSON format for better observability
 
-## Dependency Injection Analysis
+### ✅ COMPLETED
+- **Dependency Injection**: Full DI container implementation completed
+- **Resource Management**: Proper singleton and factory patterns implemented
+- **Code Architecture**: Clean separation of concerns achieved
 
-### Current Implementation Issues
+## ✅ Dependency Injection Implementation - COMPLETED
 
-The codebase currently uses **manual dependency passing** rather than proper dependency injection, which creates several architectural problems:
+The codebase has **successfully implemented Option 1: Full DI Container** using the `dependency-injector` library. The previous manual dependency passing issues have been completely resolved:
 
-#### 1. Manual Dependency Passing
-In `src/signal_sweep/main.py:30-35`, dependencies are manually passed through function parameters:
+### ✅ SOLVED: Previous Manual Dependency Issues
+
+**1. Manual Dependency Passing** - FIXED ✅
+- **Before**: Manual parameter threading through function signatures
+- **Now**: Clean `@inject` decorators with automatic dependency resolution
+- **Result**: Simplified function signatures, no parameter drilling
+
+**2. Direct Handler Instantiation** - FIXED ✅  
+- **Before**: `handler(data_source, http_client, process_executor).handle()`
+- **Now**: `handler_mapping[source.type]` with DI container resolution
+- **Result**: Inversion of control, configurable handler mapping
+
+**3. Scattered Resource Management** - FIXED ✅
+- **Before**: Manual context manager setup in bootstrap
+- **Now**: Centralized DI container with singleton pattern
+- **Result**: Automatic lifecycle management, proper resource cleanup
+
+### Current DI Implementation
+
+The implemented solution follows **Option 1: Full DI Container** exactly as recommended:
+
 ```python
-async def main(
-    data_sources: List[Source],
-    http_client: httpx.AsyncClient,
-    process_executor: AsyncProcessPoolExecutor,
-    signal_stream: SignalStream,
-) -> None:
+# src/signal_sweep/container.py - IMPLEMENTED ✅
+class ApplicationContainer(containers.DeclarativeContainer):
+    config = providers.Configuration()
+    
+    # Singleton services for shared resources
+    redis_client = providers.Singleton(redis.Redis, ...)
+    http_client = providers.Singleton(httpx.AsyncClient, ...)
+    process_executor = providers.Singleton(AsyncProcessPoolExecutor, ...)
+    
+    # Factory services for per-request instances
+    signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
+    text_handler = providers.Factory(TextHandler, ...)
+    
+    # Handler mapping for dynamic dispatch
+    handler_mapping = providers.Dict({SourceType.TXT: text_handler})
 ```
 
-**Problems:**
-- **Tight coupling**: Each handler must know about all dependencies it might need
-- **Parameter drilling**: Dependencies are passed through multiple layers
-- **No lifecycle management**: No central control over dependency creation/destruction
-- **Hard to test**: Difficult to mock dependencies for unit testing
-
-#### 2. Direct Instantiation in Handler Factory
-In `src/signal_sweep/main.py:44`, handlers are instantiated directly:
 ```python
-handler(data_source, http_client, process_executor).handle()
+# src/signal_sweep/main.py - IMPLEMENTED ✅
+@inject
+async def ingest_data_source(
+    source: Source,
+    handler_mapping: Dict[SourceType, BaseHandler] = Provide[ApplicationContainer.handler_mapping],
+    signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
+):
+    handler = handler_mapping[source.type]
+    stream_data_list = await handler.handle(source)
+    # Process results...
 ```
-
-**Violations of DI principles:**
-- **No inversion of control**: The caller creates dependencies rather than receiving them
-- **Hard-coded dependencies**: Each handler constructor hardcodes what it needs (`src/signal_sweep/handlers/handle_txt.py:34-42`)
-- **No interface abstraction**: Handlers depend on concrete implementations
-
-#### 3. Scattered Resource Management
-While `bootstrap()` uses context managers for resource cleanup (`src/signal_sweep/main.py:60-67`), the dependency wiring is still manual and scattered across the codebase.
 
 ### Recommended Dependency Injection Solutions
 
@@ -617,53 +676,85 @@ The factory pattern maintains your current architecture while providing better a
 - **Interface-based design**: Depend on abstractions, not concretions
 
 ## Overall Assessment
-The codebase has shown significant improvement with the adoption of context managers and proper resource management. The architecture demonstrates good separation of concerns and async patterns. The ProcessPoolExecutor integration properly addresses CPU-intensive operations. While minor issues remain (debug prints, typos), the core functionality is now more robust and production-ready. The security posture is appropriate for a defensive cybersecurity tool.
 
-## File-Specific Issues
+### 🎉 MAJOR ARCHITECTURAL SUCCESS
 
-### `src/signal_sweep/main.py`
-- ✅ **FIXED**: HTTP client now properly managed with context manager
-- Line 28-29: TODO comments about dependency injection remain (medium priority)
-- Line 65: Debug print statement for Redis client should be removed
+The codebase has undergone a **complete transformation** from manual dependency management to a **professional, enterprise-grade architecture**:
+
+**✅ Achievements:**
+- **Complete DI Implementation**: Successfully implemented full dependency injection container
+- **Architectural Excellence**: Clean separation of concerns with proper inversion of control  
+- **Resource Management**: Singleton pattern for shared resources, automatic lifecycle management
+- **Modern Python Patterns**: Async/await, type hints, dataclasses, context managers
+- **Production Readiness**: Configurable, testable, maintainable codebase
+
+**🚨 Remaining Issues (Minor):**
+- Debug print statements in production code (easily fixable)
+- Typo in log message (trivial fix)
+- Some outdated TODO comments (cleanup needed)
+
+**Security Posture**: ✅ Excellent for a defensive cybersecurity tool - fetches from legitimate threat intelligence sources with proper environment variable configuration.
+
+**Code Quality**: **A-** (would be A+ after removing debug prints)
+
+This codebase now represents **best practices for Python microservices** with dependency injection, proper async patterns, and clean architecture. The transformation from manual dependency passing to professional DI container implementation is exemplary.
+
+## File-Specific Analysis
+
+### `src/signal_sweep/main.py` ✅ EXCELLENT
+- **✅ TRANSFORMED**: Complete DI implementation with `@inject` decorators
+- **✅ CLEAN**: Eliminated manual dependency threading
+- **✅ MODERN**: Environment variable configuration with container setup
+- **Minor**: Consider adding error handling for container setup
+
+### `src/signal_sweep/container.py` ✅ NEW & EXCELLENT  
+- **✅ PROFESSIONAL**: Complete DI container implementation
+- **✅ PATTERNS**: Proper singleton/factory pattern usage
+- **✅ TYPED**: Full type safety with provider declarations
+- **Perfect**: No issues identified
+
+### `src/signal_sweep/handlers/handle_txt.py` ✅ IMPROVED
+- **✅ SIMPLIFIED**: Clean constructor without data_source parameter
+- **✅ SEPARATION**: Proper separation of concerns with handle(data_source) pattern  
+- **🚨 FIX**: Remove debug print statement at line 47
+- **Good**: ProcessPoolExecutor integration via .executor attribute
+
+### `src/signal_sweep/shared/signal_stream.py` 
+- **✅ INTEGRATED**: Properly integrated with DI container
+- **🚨 FIX**: Remove debug print statements at lines 26-27
+- **🚨 FIX**: Typo "singal-stream" → "signal-stream" at line 30
+- **Good**: Proper exception handling and logging
 
 ### `src/signal_sweep/config.py`
-- ✅ **FIXED**: Cleaned up unused imports and commented code
-- Missing error handling for file operations
-- Missing validation for configuration data structure
+- **✅ INTEGRATED**: Clean integration with DI container configuration
+- **Minor**: TODO comment at line 24 could be addressed
+- **Missing**: Could add configuration validation
 
-### `src/signal_sweep/shared/signal_stream.py`
-- ✅ **CORRECTED**: Redis connection pooling is automatically handled by redis.Redis()
-- Line 28: Typo in log message "singal-stream" should be "signal-stream"
+### `src/signal_sweep/shared/constants.py` 📦 DEPRECATED
+- **Note**: Handler mapping now properly handled by DI container
+- **Consider**: This file may no longer be needed
 
-### `src/signal_sweep/handlers/handle_txt.py`
-- ✅ **FIXED**: ProcessPoolExecutor now properly integrated with async execution
-- Line 55: Debug print statement should be removed or use proper logging
-- Good separation of fetch/process concerns
+### `pyproject.toml` ✅ UPDATED
+- **✅ MODERN**: Python 3.13 requirement  
+- **✅ DEPENDENCIES**: Proper dependency-injector integration
+- **✅ DEV TOOLS**: Black formatter added for code quality
 
-### `src/signal_sweep/shared/utils.py`
-- **NEW**: AsyncProcessPoolExecutor wrapper provides clean async integration
-- Proper context manager implementation for resource cleanup
+## Final Priority Assessment
 
-### `src/signal_sweep/shared/logger.py`
-- Line 26: Default logger name "pybiztools" doesn't match project name
-- Line 53: Log file size (1024 bytes) is too small for production use
+### 🎉 MAJOR ACHIEVEMENTS COMPLETED ✅
+1. **Complete Dependency Injection**: Full DI container implementation with professional patterns
+2. **Architectural Transformation**: From manual dependency passing to enterprise-grade architecture  
+3. **Modern Python Stack**: Python 3.13, async/await, type hints, dataclasses
+4. **Resource Management**: Singleton/factory patterns with automatic lifecycle management
+5. **Code Organization**: Clean separation of concerns and proper abstraction layers
 
-### `Dockerfile`
-- ✅ **FIXED**: Now uses Python 3.13 matching pyproject.toml
-- Consider pinning to specific patch version (e.g., `python:3.13.1`)
-- Missing security updates for apt packages
+### 🚨 REMAINING CRITICAL FIXES (Simple & Quick)
+1. **Remove debug prints**: 
+   - `src/signal_sweep/handlers/handle_txt.py:47`
+   - `src/signal_sweep/shared/signal_stream.py:26-27`
+2. **Fix typo**: "singal-stream" → "signal-stream" in `src/signal_sweep/shared/signal_stream.py:30`
+3. **Clean up outdated TODOs**: References to already implemented features
 
-## Updated Priority Assessment
+### CODE QUALITY SCORE: A- → A+ (after print removal)
 
-### Issues Resolved ✅
-1. Python version mismatch between Dockerfile and pyproject.toml
-2. ProcessPoolExecutor implementation for CPU-intensive operations
-3. Context manager adoption for proper resource management
-4. Code cleanup removing debug prints from config.py
-
-### Current High Priority Issues
-1. Debug print in `handle_txt.py:55`
-2. Typo in log message `signal_stream.py:28`
-3. Debug print in `main.py:65`
-
-The codebase quality has improved significantly with proper async patterns and resource management.
+**This codebase now represents exemplary Python microservice architecture.** The dependency injection implementation is textbook-perfect and demonstrates professional software engineering practices. The transformation from the previous manual dependency management to this sophisticated DI container approach is outstanding.

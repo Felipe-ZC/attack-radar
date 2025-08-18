@@ -33,30 +33,22 @@ process(fetch(source.url))
 class TextHandler(BaseHandler):
     def __init__(
         self,
-        data_source: Source,
         http_client: httpx.AsyncClient,
         process_executor: ProcessPoolExecutor,
     ):
         self.http_client = http_client
         self.process_executor = process_executor
-        self.data_source = data_source
 
-    async def handle(self):
-        return await self.process(await self.fetch(self.data_source.url))
-
-    async def fetch(self, url: str):
-        response = await self.http_client.get(url)
-        return response.text
-
-    async def process(self, raw_text: str) -> List[StreamData]:
+    async def handle(self, data_source: Source):
+        response = await self.http_client.get(data_source.url)
         parsed = await asyncio.get_event_loop().run_in_executor(
-            self.process_executor, _parse_text, raw_text
+            self.process_executor.executor, _parse_text, response.text
         )
         print(parsed)
         return [
             StreamData(
                 ip=ip,
-                source_url=self.data_source.url,
+                source_url=data_source.url,
                 timestamp=int(time.time()),
             )
             for ip in parsed

@@ -16,14 +16,16 @@ class StreamData:
 
 
 class SignalStream:
-    def __init__(self, redis_svc: redis.Redis):
-        self.redis_svc = redis_svc
+    def __init__(self, redis_client: redis.Redis):
+        self.redis_client = redis_client
 
     async def write_stream_data(self, stream_data: StreamData):
         try:
             stream_name = DEFAULT_STREAM_NAME
             data = asdict(stream_data)
-            message_id = await self.redis_svc.xadd(stream_name, data)
+            print(stream_name, data)
+            print(self.redis_client)
+            message_id = await self.redis_client.xadd(stream_name, data)
             logger.info(
                 "Wrote new message to singal-stream, ID is: %s",
                 str(message_id),
@@ -37,7 +39,7 @@ class SignalStream:
 
 def get_redis_client() -> redis.Redis:
     return redis.Redis(
-        host=os.getenv("REDIS_HOST", "localhost"),
+        host=os.getenv("REDIS_HOST", "signal-stream"),
         port=os.getenv("REDIS_PORT", 6379),
         db=os.getenv("SIGNAL_STREAM_DB", 0),
     )
