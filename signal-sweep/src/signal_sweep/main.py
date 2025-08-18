@@ -6,9 +6,11 @@ from typing import List, Dict
 from dependency_injector.wiring import Provide, inject
 
 from .shared.source import Source, SourceType
+from .shared.logger import logger
 from .handlers.base_handler import Handler
 from .container import ApplicationContainer
 from .shared.signal_stream import SignalStream, StreamData
+from .shared.utils import async_batch_process_list
 
 from .config import load_config
 
@@ -27,30 +29,45 @@ def get_config_file_path() -> Path:
 
 
 @inject
-async def ingest_data_source(
+async def handle_data_source(
     source: Source,
     handler_mapping: Dict[SourceType, Handler] = Provide[
         ApplicationContainer.handler_mapping
     ],
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
-):
+) -> List[StreamData]:
     handler = handler_mapping[source.type]
-    stream_data_list: List[StreamData] = await handler.handle(source)
-    # TODO: Maybe use a batch writer instead?
-    write_stream_tasks = [
-        signal_stream.write_stream_data(stream_data)
-        for stream_data in stream_data_list
-    ]
-    await asyncio.gather(*write_stream_tasks)
+    return await handler.handle(source)
 
 
-# @inject
+@inject
+async def ingest_stream_data(
+    stream_data: StreamData,
+    signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
+) -> List[StreamData]:
+    logger.info("Trying to write %s", stream_data)
+    return await signal_stream.write_stream_data(stream_data)
+
+
 @inject
 async def main(
     data_sources: List[Source] = Provide[ApplicationContainer.config.sources],
 ) -> None:
-    tasks = [ingest_data_source(source) for source in data_sources]
-    await asyncio.gather(*tasks)
+    stream_data_list_generator = async_batch_process_list(
+        data_sources, DEFAULT_BATCH_SIZE, handle_data_source
+    )
+    async for stream_data_list in stream_data_list_generator:
+        ingest_stream_data_result_generator = async_batch_process_list(
+            stream_data_list, DEFAULT_BATCH_SIZE, ingest_stream_data
+        )
+        async for message_id in ingest_stream_data_result_generator:
+            if message_id:
+                logger.info(
+                    "Wrote new message to singal-stream, ID is: %s",
+                    message_id
+                )
+            else:
+                logger.info("Already exists in stream!")
 
 
 async def bootstrap() -> None:

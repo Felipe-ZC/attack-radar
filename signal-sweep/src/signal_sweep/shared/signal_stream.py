@@ -1,4 +1,5 @@
-import os
+import json
+import hashlib
 
 from dataclasses import dataclass, asdict
 import redis.asyncio as redis
@@ -6,40 +7,38 @@ import redis.asyncio as redis
 from ..shared.logger import logger
 
 DEFAULT_STREAM_NAME = "signal-stream"
+DEFAULT_SET_NAME = "signal-stream-set"
 
 
-@dataclass
+@dataclass(frozen=True)
 class StreamData:
     ip: str
     source_url: str
-    timestamp: int
 
 
 class SignalStream:
     def __init__(self, redis_client: redis.Redis):
         self.redis_client = redis_client
 
-    async def write_stream_data(self, stream_data: StreamData):
+    async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
-            stream_name = DEFAULT_STREAM_NAME
             data = asdict(stream_data)
-            print(stream_name, data)
-            print(self.redis_client)
-            message_id = await self.redis_client.xadd(stream_name, data)
-            logger.info(
-                "Wrote new message to singal-stream, ID is: %s",
-                str(message_id),
-            )
+            hash_id = hashlib.sha256(
+                json.dumps(data, sort_keys=True).encode()
+            ).hexdigest()
+
+            if not await self.redis_client.sismember(
+                DEFAULT_SET_NAME, hash_id
+            ):
+                await self.redis_client.sadd(DEFAULT_SET_NAME, hash_id)
+                message_id = await self.redis_client.xadd(
+                    DEFAULT_STREAM_NAME, data
+                )
+                return str(message_id)
         except Exception as e:
             logger.error(
                 "Error while trying to write new message to signal-stream, error is %s",
                 e,
             )
-
-
-def get_redis_client() -> redis.Redis:
-    return redis.Redis(
-        host=os.getenv("REDIS_HOST", "signal-stream"),
-        port=os.getenv("REDIS_PORT", 6379),
-        db=os.getenv("SIGNAL_STREAM_DB", 0),
-    )
+            raise e
+        return ""
