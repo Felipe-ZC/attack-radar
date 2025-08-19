@@ -63,8 +63,7 @@ async def main(
         async for message_id in ingest_stream_data_result_generator:
             if message_id:
                 logger.info(
-                    "Wrote new message to singal-stream, ID is: %s",
-                    message_id
+                    "Wrote new message to singal-stream, ID is: %s", message_id
                 )
             else:
                 logger.info("Already exists in stream!")
