@@ -17,7 +17,6 @@ async def test_text_handler(
     sample_sources: List[Source],
 ):
     txt_handler = TextHandler(mock_http_client, mock_process_executor)
-
     expected_ips = ["192.168.1.1", "10.0.0.1"]
     expected_results = [
         StreamData(ip, source.url)

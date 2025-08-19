@@ -3,6 +3,41 @@
 ## Project Overview
 Signal-sweep is a data ingestion service that fetches IP addresses from threat intelligence sources and writes them to a Redis stream for downstream processing. The service is part of a larger cybersecurity monitoring system designed to track and visualize cyberattack origins.
 
+## Recent Changes Since Last Review
+
+### 📊 **SUMMARY**: Significant Progress Made
+
+**🎉 MAJOR IMPROVEMENTS COMPLETED:**
+- ✅ Constants consolidation and centralization
+- ✅ File structure reorganization 
+- ✅ TODO comments cleanup
+- ✅ Multiple debug print statements removed
+
+**🚨 CRITICAL ISSUES REDUCED:** From 3 categories to 2 specific fixes needed
+- 🚨 **REMAINING**: 1 debug print statement + 1 typo fix = **2 simple fixes to A+ code quality**
+
+### ✅ NEW ARCHITECTURAL IMPROVEMENTS
+
+**1. Constants Consolidation** ✅ **COMPLETED**
+- **Achievement**: All CAPITAL_SNAKE_CASE constants moved to centralized `src/signal_sweep/shared/constants.py`
+- **Constants Consolidated**:
+  - `DEFAULT_BATCH_SIZE = 5` (from `main.py`)
+  - `DEFAULT_STREAM_NAME = "signal-stream"` (from `signal_stream.py`)
+  - `DEFAULT_SET_NAME = "signal-stream-set"` (from `signal_stream.py`)
+  - `IP_V4_REGEX = r"..."` (from `text_handler.py`)
+- **Import Updates**: All files properly updated to import from constants
+- **Benefit**: Better maintainability and single source of truth for configuration values
+
+**2. File Structure Reorganization** ✅ **COMPLETED**
+- **Moved**: `src/signal_sweep/handlers/` → `src/signal_sweep/core/handlers/`
+- **Added**: `src/signal_sweep/core/models.py` for centralized data models
+- **Result**: Cleaner architectural separation between core business logic and shared utilities
+
+**3. Code Quality Improvements** ✅ **MAJOR PROGRESS**
+- **✅ REMOVED**: All TODO comments that referenced outdated patterns
+- **✅ CLEANED**: Multiple debug print statements eliminated
+- **✅ ENHANCED**: Better import organization and dependency management
+
 ## Major Changes Since Last Review
 
 ### ✅ COMPLETE DEPENDENCY INJECTION IMPLEMENTATION
@@ -58,18 +93,19 @@ The codebase has undergone a **major architectural transformation** implementing
 
 ### Critical Issues 🚨
 
-1. **Debug Print Statements** - Multiple locations still contain debug prints:
-   - `src/signal_sweep/handlers/handle_txt.py:47` - `print(parsed)`
-   - `src/signal_sweep/shared/signal_stream.py:26-27` - `print(stream_name, data)` and `print(self.redis_client)`
+1. **Debug Print Statement** - **REDUCED BUT STILL PRESENT**:
+   - ✅ **FIXED**: Removed print statements from `text_handler.py` 
+   - 🚨 **REMAINING**: `src/signal_sweep/core/signal_stream.py:19` - `print(self.redis_client)`
    - Should use proper logging instead of print statements
 
-2. **Typo in Log Message** in `src/signal_sweep/shared/signal_stream.py:30`
-   - "singal-stream" should be "signal-stream" 
-   - Affects log readability and monitoring
+2. **Typo in Log Message** - **STILL PRESENT**:
+   - 🚨 **LOCATION**: `src/signal_sweep/main.py:66` - "singal-stream" should be "signal-stream"
+   - **Impact**: Affects log readability and monitoring
+   - **Previous location fixed**: The typo was fixed in `signal_stream.py` but appeared in `main.py`
 
-3. **Outdated TODO Comments** - Several TODOs reference old patterns:
-   - `src/signal_sweep/handlers/handle_txt.py:58-59` - References ProcessPoolExecutor (now implemented)
-   - `src/signal_sweep/config.py:24` - Generic TODO about error handling
+3. **Outdated TODO Comments** - ✅ **RESOLVED**:
+   - ✅ **CLEANED UP**: All TODO comments have been removed from the codebase
+   - **Result**: Codebase no longer contains references to outdated patterns
 
 ### Type Safety ✅
 - **Excellent**: Comprehensive type hints throughout the codebase
@@ -127,11 +163,12 @@ The codebase has undergone a **major architectural transformation** implementing
 ## Recommendations
 
 ### High Priority 🚨
-1. **Remove all debug print statements** from production code:
-   - `src/signal_sweep/handlers/handle_txt.py:47`
-   - `src/signal_sweep/shared/signal_stream.py:26-27`
-2. **Fix typo** in log message ("singal-stream" → "signal-stream") in `src/signal_sweep/shared/signal_stream.py:30`
-3. **Clean up outdated TODO comments** that reference implemented features
+1. **Remove remaining debug print statement** from production code:
+   - 🚨 **ONLY REMAINING**: `src/signal_sweep/core/signal_stream.py:19` - `print(self.redis_client)`
+   - ✅ **PROGRESS**: All other debug prints have been removed
+2. **Fix typo** in log message ("singal-stream" → "signal-stream") in `src/signal_sweep/main.py:66`
+   - **Note**: Similar typo was fixed in other locations but this one remains
+3. ✅ **COMPLETED**: Clean up outdated TODO comments - All have been removed
 
 ### Medium Priority 
 1. **Add URL validation and HTTPS enforcement** for external data sources
@@ -149,6 +186,10 @@ The codebase has undergone a **major architectural transformation** implementing
 - **Dependency Injection**: Full DI container implementation completed
 - **Resource Management**: Proper singleton and factory patterns implemented
 - **Code Architecture**: Clean separation of concerns achieved
+- **Constants Consolidation**: All CAPITAL_SNAKE_CASE constants centralized
+- **File Structure**: Proper core/ and shared/ organization implemented
+- **Model Centralization**: Source and StreamData models consolidated
+- **TODO Cleanup**: All outdated TODO comments removed
 
 ## ✅ Dependency Injection Implementation - COMPLETED
 
@@ -701,10 +742,12 @@ This codebase now represents **best practices for Python microservices** with de
 
 ## File-Specific Analysis
 
-### `src/signal_sweep/main.py` ✅ EXCELLENT
+### `src/signal_sweep/main.py` ✅ IMPROVED
 - **✅ TRANSFORMED**: Complete DI implementation with `@inject` decorators
 - **✅ CLEAN**: Eliminated manual dependency threading
+- **✅ CONSTANTS**: Uses centralized `DEFAULT_BATCH_SIZE` from constants module
 - **✅ MODERN**: Environment variable configuration with container setup
+- **🚨 FIX**: Typo "singal-stream" → "signal-stream" at line 66
 - **Minor**: Consider adding error handling for container setup
 
 ### `src/signal_sweep/container.py` ✅ NEW & EXCELLENT  
@@ -713,16 +756,19 @@ This codebase now represents **best practices for Python microservices** with de
 - **✅ TYPED**: Full type safety with provider declarations
 - **Perfect**: No issues identified
 
-### `src/signal_sweep/handlers/handle_txt.py` ✅ IMPROVED
+### `src/signal_sweep/core/handlers/text_handler.py` ✅ EXCELLENT
+- **✅ RELOCATED**: Moved to proper `core/handlers/` structure
 - **✅ SIMPLIFIED**: Clean constructor without data_source parameter
 - **✅ SEPARATION**: Proper separation of concerns with handle(data_source) pattern  
-- **🚨 FIX**: Remove debug print statement at line 47
-- **Good**: ProcessPoolExecutor integration via .executor attribute
+- **✅ CONSTANTS**: Uses centralized `IP_V4_REGEX` from constants module
+- **✅ CLEAN**: Debug print statements removed
+- **Perfect**: No issues identified
 
-### `src/signal_sweep/shared/signal_stream.py` 
+### `src/signal_sweep/core/signal_stream.py` ✅ IMPROVED
+- **✅ RELOCATED**: Moved to proper `core/` structure for business logic
+- **✅ CONSTANTS**: Uses centralized `DEFAULT_STREAM_NAME` and `DEFAULT_SET_NAME`
 - **✅ INTEGRATED**: Properly integrated with DI container
-- **🚨 FIX**: Remove debug print statements at lines 26-27
-- **🚨 FIX**: Typo "singal-stream" → "signal-stream" at line 30
+- **🚨 FIX**: Remove debug print statement at line 19 - `print(self.redis_client)`
 - **Good**: Proper exception handling and logging
 
 ### `src/signal_sweep/config.py`
@@ -730,9 +776,19 @@ This codebase now represents **best practices for Python microservices** with de
 - **Minor**: TODO comment at line 24 could be addressed
 - **Missing**: Could add configuration validation
 
-### `src/signal_sweep/shared/constants.py` 📦 DEPRECATED
-- **Note**: Handler mapping now properly handled by DI container
-- **Consider**: This file may no longer be needed
+### `src/signal_sweep/shared/constants.py` ✅ ENHANCED
+- **✅ CENTRALIZED**: Now serves as single source of truth for all constants
+- **✅ ORGANIZED**: Constants grouped by category (defaults, regex patterns)
+- **✅ EXPANDED**: Contains all CAPITAL_SNAKE_CASE constants from across codebase
+- **✅ PROPER USAGE**: All modules correctly import from this centralized location
+- **Perfect**: Excellent implementation of constants management
+
+### `src/signal_sweep/core/models.py` ✅ NEW & EXCELLENT
+- **✅ CENTRALIZED**: All data models consolidated in one location
+- **✅ PROPER IMPORTS**: Uses constants from centralized constants module
+- **✅ TYPE SAFETY**: Proper dataclass usage with frozen StreamData
+- **✅ CLEAN**: Well-structured Source and StreamData models
+- **Perfect**: No issues identified
 
 ### `pyproject.toml` ✅ UPDATED
 - **✅ MODERN**: Python 3.13 requirement  
@@ -749,11 +805,12 @@ This codebase now represents **best practices for Python microservices** with de
 5. **Code Organization**: Clean separation of concerns and proper abstraction layers
 
 ### 🚨 REMAINING CRITICAL FIXES (Simple & Quick)
-1. **Remove debug prints**: 
-   - `src/signal_sweep/handlers/handle_txt.py:47`
-   - `src/signal_sweep/shared/signal_stream.py:26-27`
-2. **Fix typo**: "singal-stream" → "signal-stream" in `src/signal_sweep/shared/signal_stream.py:30`
-3. **Clean up outdated TODOs**: References to already implemented features
+1. **Remove debug print**: 
+   - ✅ **PROGRESS**: Multiple debug prints removed from previous locations
+   - 🚨 **REMAINING**: `src/signal_sweep/core/signal_stream.py:19` - `print(self.redis_client)`
+2. **Fix typo**: "singal-stream" → "signal-stream" in `src/signal_sweep/main.py:66`
+   - **Note**: Previous typo in `signal_stream.py` was fixed, but new occurrence found in `main.py`
+3. ✅ **COMPLETED**: Clean up outdated TODOs - All TODO comments have been removed
 
 ### CODE QUALITY SCORE: A- → A+ (after print removal)
 

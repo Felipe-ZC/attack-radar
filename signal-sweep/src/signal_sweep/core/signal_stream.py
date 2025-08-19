@@ -1,5 +1,6 @@
 import json
 import hashlib
+from typing import Dict
 
 from dataclasses import asdict
 import redis.asyncio as redis
@@ -9,8 +10,10 @@ from ..shared.logger import logger
 from ..shared.constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
 
-def _get_json_str_hash(json_str: str) -> str:
-    return hashlib.sha256(json_str).hexdigest()
+def _get_dict_str_hash(some_dict: Dict) -> str:
+    return hashlib.sha256(
+        json.dumps(some_dict, sort_keys=True).encode()
+    ).hexdigest()
 
 
 class SignalStream:
@@ -21,9 +24,7 @@ class SignalStream:
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
             data = asdict(stream_data)
-            hash_id = _get_json_str_hash(
-                json.dumps(data, sort_keys=True).encode()
-            )
+            hash_id = _get_dict_str_hash(data)
             if not await self.redis_client.sismember(
                 DEFAULT_SET_NAME, hash_id
             ):
