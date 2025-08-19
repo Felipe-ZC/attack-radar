@@ -4,10 +4,10 @@ from dependency_injector import containers, providers
 import httpx
 import redis.asyncio as redis
 
-from .shared.signal_stream import SignalStream
-from .shared.source import SourceType
+from .core.signal_stream import SignalStream
+from .core.source import SourceType
 from .shared.utils import AsyncProcessPoolExecutor
-from .handlers.text_handler import TextHandler
+from .core.handlers.text_handler import TextHandler
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

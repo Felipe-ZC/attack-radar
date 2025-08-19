@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from ..handlers.base_handler import Handler
+from .handlers.base_handler import Handler
 
 
 class SourceType(Enum):

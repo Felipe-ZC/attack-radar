@@ -5,11 +5,11 @@ from typing import List, Dict
 
 from dependency_injector.wiring import Provide, inject
 
-from .shared.source import Source, SourceType
+from .core.source import Source, SourceType
 from .shared.logger import logger
-from .handlers.base_handler import Handler
+from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
-from .shared.signal_stream import SignalStream, StreamData
+from .core.signal_stream import SignalStream, StreamData
 from .shared.utils import async_batch_process_list
 
 from .config import load_config

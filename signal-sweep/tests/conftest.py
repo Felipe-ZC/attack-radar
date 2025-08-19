@@ -14,10 +14,10 @@ import pytest
 import httpx
 import redis.asyncio as redis
 
-from signal_sweep.shared.signal_stream import StreamData, SignalStream
-from signal_sweep.shared.source import Source, SourceType
+from signal_sweep.core.signal_stream import StreamData, SignalStream
+from signal_sweep.core.source import Source, SourceType
 from signal_sweep.shared.utils import AsyncProcessPoolExecutor
-from signal_sweep.handlers.text_handler import TextHandler
+from signal_sweep.core.handlers.text_handler import TextHandler
 from signal_sweep.container import ApplicationContainer
 
 
@@ -70,9 +70,11 @@ def mock_process_executor() -> MagicMock:
     mock_process_executor.submit = MagicMock()
 
     # Set up the async context manager behavior
-    mock_async_executor.__aenter__ = AsyncMock(return_value=mock_process_executor)
+    mock_async_executor.__aenter__ = AsyncMock(
+        return_value=mock_process_executor
+    )
     mock_async_executor.__aexit__ = AsyncMock(return_value=None)
-    
+
     # Also set the executor attribute for completeness
     mock_async_executor.executor = mock_process_executor
 
@@ -113,7 +115,7 @@ def sample_config_data() -> Dict[str, List[Dict[str, str]]]:
 
 @pytest.fixture
 def mock_yaml_load(
-    sample_config_data: Dict[str, List[Dict[str, str]]]
+    sample_config_data: Dict[str, List[Dict[str, str]]],
 ) -> Generator[Dict[str, List[Dict[str, str]]], None, None]:
     """Mock yaml.safe_load to return sample config."""
     with patch(
@@ -148,7 +150,7 @@ def sample_stream_data() -> List[StreamData]:
 @pytest.fixture
 def sample_sources() -> List[Source]:
     """Sample Source objects for testing."""
-    from signal_sweep.handlers.text_handler import TextHandler
+    from signal_sweep.core.handlers.text_handler import TextHandler
 
     handler = TextHandler(
         http_client=MagicMock(), process_executor=MagicMock()
@@ -175,7 +177,9 @@ def signal_stream(mock_redis_client: AsyncMock) -> SignalStream:
 
 
 @pytest.fixture
-def text_handler(mock_http_client: AsyncMock, mock_process_executor: MagicMock) -> TextHandler:
+def text_handler(
+    mock_http_client: AsyncMock, mock_process_executor: MagicMock
+) -> TextHandler:
     """TextHandler instance with mocked dependencies."""
     return TextHandler(
         http_client=mock_http_client, process_executor=mock_process_executor

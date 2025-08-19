@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from .shared.source import Source, SourceType
+from .core.source import Source, SourceType
 from .shared.constants import SOURCE_TYPE_TO_HANDLER_DICT
 
 
