@@ -7,8 +7,8 @@ from pathlib import Path
 
 import yaml
 
-from .core.source import Source, SourceType
-from .shared.constants import SOURCE_TYPE_TO_HANDLER_DICT
+from .core.source import Source
+from .shared.constants import SourceType
 
 
 def load_config(config_file_path: Path) -> List[Source]:
@@ -21,10 +21,6 @@ def load_config(config_file_path: Path) -> List[Source]:
         Source(
             url=source.get("url", ""),
             type=SourceType(source.get("type", "")),
-            # TODO: Add handler...
-            handler=SOURCE_TYPE_TO_HANDLER_DICT.get(
-                SourceType(source.get("type", ""))
-            ),
         )
         for source in config_dict.get("sources", [])
     ]

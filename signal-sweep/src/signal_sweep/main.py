@@ -5,7 +5,8 @@ from typing import List, Dict
 
 from dependency_injector.wiring import Provide, inject
 
-from .core.source import Source, SourceType
+from .core.source import Source
+from .shared.constants import SourceType
 from .shared.logger import logger
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer

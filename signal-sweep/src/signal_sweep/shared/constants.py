@@ -1,4 +1,7 @@
-from ..core.handlers.text_handler import TextHandler
-from ..core.source import SourceType
+from enum import Enum
 
-SOURCE_TYPE_TO_HANDLER_DICT = {SourceType.TXT: TextHandler}
+
+class SourceType(Enum):
+    CSV = "csv"
+    JSON = "json"
+    TXT = "txt"

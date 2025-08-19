@@ -5,7 +5,7 @@ import httpx
 import redis.asyncio as redis
 
 from .core.signal_stream import SignalStream
-from .core.source import SourceType
+from .shared.constants import SourceType
 from .shared.utils import AsyncProcessPoolExecutor
 from .core.handlers.text_handler import TextHandler
 
