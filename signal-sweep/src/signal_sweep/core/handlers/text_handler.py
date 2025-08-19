@@ -12,8 +12,7 @@ import httpx
 from .base_handler import Handler
 from ..models import StreamData
 from ..models import Source
-
-IP_V4_REGEX = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+from ...shared.constants import IP_V4_REGEX
 
 
 class TextHandler(Handler):

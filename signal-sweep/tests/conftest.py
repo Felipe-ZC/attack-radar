@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Generator
 from unittest.mock import AsyncMock, MagicMock, patch, create_autospec
-from concurrent.futures import ProcessPoolExecutor, Executor
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 import httpx

@@ -6,9 +6,7 @@ import redis.asyncio as redis
 
 from .models import StreamData
 from ..shared.logger import logger
-
-DEFAULT_STREAM_NAME = "signal-stream"
-DEFAULT_SET_NAME = "signal-stream-set"
+from ..shared.constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
 
 def _get_json_str_hash(json_str: str) -> str:

@@ -6,7 +6,7 @@ from typing import List, Dict
 from dependency_injector.wiring import Provide, inject
 
 from .core.models import Source
-from .shared.constants import SourceType
+from .shared.constants import SourceType, DEFAULT_BATCH_SIZE
 from .shared.logger import logger
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
@@ -15,8 +15,6 @@ from .core.models import StreamData
 from .shared.utils import async_batch_process_list
 
 from .config import load_config
-
-DEFAULT_BATCH_SIZE = 5
 
 
 def get_config_file_path() -> Path:

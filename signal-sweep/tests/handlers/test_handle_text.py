@@ -2,7 +2,10 @@ from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 from itertools import product
 
-from src.signal_sweep.core.handlers.text_handler import TextHandler, _parse_text
+from src.signal_sweep.core.handlers.text_handler import (
+    TextHandler,
+    _parse_text,
+)
 from src.signal_sweep.core.models import Source
 from src.signal_sweep.core.models import StreamData
 
