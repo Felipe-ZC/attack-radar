@@ -28,7 +28,7 @@ class TextHandler(Handler):
     async def handle(self, data_source: Source):
         response = await self.http_client.get(data_source.url)
         parsed = await asyncio.get_event_loop().run_in_executor(
-            self.process_executor.executor, _parse_text, response.text
+            self.process_executor, _parse_text, response.text
         )
         return [
             StreamData(

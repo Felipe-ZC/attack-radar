@@ -12,22 +12,25 @@ from .handlers.handle_txt import TextHandler
 
 class ApplicationContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
-
-    redis_client = providers.Singleton(
+    
+    # Resources
+    redis_client = providers.Resource(
         redis.Redis,
         host=config.redis_host,
         port=config.redis_port,
         db=config.redis_db,
         decode_responses=True,
     )
-    http_client = providers.Singleton(httpx.AsyncClient, timeout=30.0)
-    process_executor = providers.Singleton(
+    http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
+    process_executor = providers.Resource(
         AsyncProcessPoolExecutor, max_workers=config.max_workers
     )
-
+    
+    # Services
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
     text_handler = providers.Factory(
         TextHandler, http_client=http_client, process_executor=process_executor
     )
-
+    
+    # Utilities
     handler_mapping = providers.Dict({SourceType.TXT: text_handler})
