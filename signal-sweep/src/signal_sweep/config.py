@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from .core.source import Source
+from .core.models import Source
 from .shared.constants import SourceType
 
 

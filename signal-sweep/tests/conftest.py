@@ -15,7 +15,7 @@ import httpx
 import redis.asyncio as redis
 
 from signal_sweep.core.signal_stream import StreamData, SignalStream
-from signal_sweep.core.source import Source
+from signal_sweep.core.models import Source
 from signal_sweep.shared.constants import SourceType
 from signal_sweep.shared.utils import AsyncProcessPoolExecutor
 from signal_sweep.core.handlers.text_handler import TextHandler
