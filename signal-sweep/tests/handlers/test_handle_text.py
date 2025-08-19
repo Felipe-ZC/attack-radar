@@ -4,7 +4,7 @@ from itertools import product
 
 from src.signal_sweep.core.handlers.text_handler import TextHandler, _parse_text
 from src.signal_sweep.core.models import Source
-from src.signal_sweep.core.signal_stream import StreamData
+from src.signal_sweep.core.models import StreamData
 
 
 async def test_text_handler(

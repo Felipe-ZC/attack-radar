@@ -1,19 +1,14 @@
 import json
 import hashlib
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 import redis.asyncio as redis
 
+from .models import StreamData
 from ..shared.logger import logger
 
 DEFAULT_STREAM_NAME = "signal-stream"
 DEFAULT_SET_NAME = "signal-stream-set"
-
-
-@dataclass(frozen=True)
-class StreamData:
-    ip: str
-    source_url: str
 
 
 class SignalStream:

@@ -10,7 +10,8 @@ from .shared.constants import SourceType
 from .shared.logger import logger
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
-from .core.signal_stream import SignalStream, StreamData
+from .core.signal_stream import SignalStream
+from .core.models import StreamData
 from .shared.utils import async_batch_process_list
 
 from .config import load_config
