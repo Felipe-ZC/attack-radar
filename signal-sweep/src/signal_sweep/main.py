@@ -45,6 +45,7 @@ async def ingest_stream_data(
     stream_data: StreamData,
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
 ) -> List[StreamData]:
+    print(f"stream_data is: {stream_data}")
     logger.info("Trying to write %s", stream_data)
     return await signal_stream.write_stream_data(stream_data)
 
@@ -53,10 +54,14 @@ async def ingest_stream_data(
 async def main(
     data_sources: List[Source] = Provide[ApplicationContainer.config.sources],
 ) -> None:
+    print(f"handle_data_source is: {handle_data_source}")
+    print(f"data_sources are: {data_sources}")
     stream_data_list_generator = async_batch_process_list(
         data_sources, DEFAULT_BATCH_SIZE, handle_data_source
     )
+    print(f"stream_data_list_generator is: {stream_data_list_generator}")
     async for stream_data_list in stream_data_list_generator:
+        print(f"stream_data_list is: {stream_data_list}")
         # TODO: Increase the batch size here, these are all network I/O operations...
         ingest_stream_data_result_generator = async_batch_process_list(
             stream_data_list,
