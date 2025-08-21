@@ -6,7 +6,7 @@ from typing import List, Dict
 from dependency_injector.wiring import Provide, inject
 
 from .core.models import Source
-from .shared.constants import SourceType, DEFAULT_BATCH_SIZE
+from .shared.constants import SourceType, DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE
 from .shared.logger import logger
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
@@ -57,8 +57,11 @@ async def main(
         data_sources, DEFAULT_BATCH_SIZE, handle_data_source
     )
     async for stream_data_list in stream_data_list_generator:
+        # TODO: Increase the batch size here, these are all network I/O operations...
         ingest_stream_data_result_generator = async_batch_process_list(
-            stream_data_list, DEFAULT_BATCH_SIZE, ingest_stream_data
+            stream_data_list,
+            min(DEFAULT_BATCH_SIZE * 10, MAX_BATCH_SIZE),
+            ingest_stream_data,
         )
         async for message_id in ingest_stream_data_result_generator:
             if message_id:

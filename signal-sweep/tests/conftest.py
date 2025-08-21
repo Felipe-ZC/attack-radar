@@ -14,6 +14,8 @@ import pytest
 import httpx
 import redis.asyncio as redis
 
+import signal_sweep.main
+
 from signal_sweep.core.signal_stream import SignalStream
 from signal_sweep.core.models import StreamData
 from signal_sweep.core.models import Source
@@ -208,6 +210,8 @@ def mock_container(
     container.config.redis_db.override(int(mock_env_vars["REDIS_DB"]))
     container.config.max_workers.override(5)
     container.config.sources.override(sample_sources)
+
+    container.wire(modules=[signal_sweep.main])
 
     return container
 
