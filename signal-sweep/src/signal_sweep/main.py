@@ -6,7 +6,7 @@ from typing import List, Dict
 from dependency_injector.wiring import Provide, inject
 
 from .core.models import Source
-from .shared.constants import SourceType, DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE
+from .shared.constants import SourceType, DEFAULT_BATCH_SIZE
 from .shared.logger import logger
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
@@ -36,7 +36,7 @@ async def handle_data_source(
     ],
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
 ) -> List[StreamData]:
-    print("in handle_data_source")
+    logger.info("Handling data source %s", source)
     handler = handler_mapping[source.type]
     return await handler.handle(source)
 
@@ -53,8 +53,7 @@ async def ingest_stream_data(
 @inject
 async def main(
     data_sources: List[Source] = Provide[ApplicationContainer.config.sources],
-) -> None:
-    print("in main")
+) -> List[str]:
     stream_data_lists: List[List[StreamData]] = await async_batch_process_list(
         data_sources, DEFAULT_BATCH_SIZE, handle_data_source
     )
@@ -66,6 +65,7 @@ async def main(
     message_ids: List[str] = await async_batch_process_list(
         flattend_stream_data_list, DEFAULT_BATCH_SIZE * 10, ingest_stream_data
     )
+    return message_ids
 
 
 async def bootstrap() -> None:
