@@ -7,5 +7,8 @@ install-tests:
 run-tests:
 	uv run pytest .
 
+run-pre-commit:
+	uv run black -l 79 ./src/ ./tests/ && uv run pytest .
+
 run: install 
 	./.venv/bin/python -m src.signal_sweep.main --config ./data_sources.yml

@@ -19,7 +19,6 @@ def _get_dict_str_hash(some_dict: Dict) -> str:
 class SignalStream:
     def __init__(self, redis_client: redis.Redis):
         self.redis_client = redis_client
-        print(self.redis_client)
 
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
@@ -28,6 +27,7 @@ class SignalStream:
             if not await self.redis_client.sismember(
                 DEFAULT_SET_NAME, hash_id
             ):
+                logger.info("Writing new entry to stream %s", stream_data)
                 await self.redis_client.sadd(DEFAULT_SET_NAME, hash_id)
                 message_id = await self.redis_client.xadd(
                     DEFAULT_STREAM_NAME, data

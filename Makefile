@@ -1,7 +1,7 @@
-run_signal-stream:
+run-signal-stream:
 	podman compose up -d --build --no-cache --force-recreate signal-stream
 
-run_signal-sweep:
+run-signal-sweep:
 	podman compose up -d --build --no-cache --force-recreate signal-sweep
 
 clean:

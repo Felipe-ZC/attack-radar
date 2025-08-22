@@ -22,7 +22,6 @@ async def async_batch_process_list(
     list_data: List, batch_size: int, process: Callable
 ):
     results = []
-    print(list_data, batch_size, process)
     for i in range(0, len(list_data), batch_size):
         tasks = [
             process(batch_item) for batch_item in list_data[i : i + batch_size]
