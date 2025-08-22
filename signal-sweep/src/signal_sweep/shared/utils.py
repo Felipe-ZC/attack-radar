@@ -18,15 +18,14 @@ class AsyncProcessPoolExecutor:
             self.executor.shutdown(wait=True)
 
 
-def get_next_batch(list_data: List, batch_size: int):
-    for batch_start in range(0, len(list_data), batch_size):
-        yield list_data[batch_start : batch_start + batch_size]
-
-
 async def async_batch_process_list(
     list_data: List, batch_size: int, process: Callable
 ):
-    for next_batch in get_next_batch(list_data, batch_size):
-        tasks = [process(batch_item) for batch_item in next_batch]
-        for completed_task in asyncio.as_completed(tasks):
-            yield await completed_task
+    results = []
+    print(list_data, batch_size, process)
+    for i in range(0, len(list_data), batch_size):
+        tasks = [
+            process(batch_item) for batch_item in list_data[i : i + batch_size]
+        ]
+        results.extend(await asyncio.gather(*tasks))
+    return results

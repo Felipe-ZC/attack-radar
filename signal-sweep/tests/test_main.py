@@ -15,13 +15,16 @@ async def test_main(
     mock_container: ApplicationContainer,
     sample_sources: List[Source],
 ):
-    await main()
-
     expected_stream_data = [
         StreamData(ip="someIP", source_url=source.url)
         for source in sample_sources
     ]
+    mock_handle_data_source.return_value = expected_stream_data
 
-    for source in sample_sources:
+    await main()
+
+    for source, expected_stream_data in zip(
+        sample_sources, expected_stream_data
+    ):
         mock_handle_data_source.assert_any_call(source)
-    # mock_ingest_stream_data.assert_called()
+        mock_ingest_stream_data.assert_any_call(expected_stream_data)
