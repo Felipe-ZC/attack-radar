@@ -1,13 +1,13 @@
 import json
 import hashlib
+import logging
 from typing import Dict
 
 from dataclasses import asdict
 import redis.asyncio as redis
 
 from .models import StreamData
-from ..shared.logger import logger
-from ..shared.constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
+from .constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
 
 def _get_dict_str_hash(some_dict: Dict) -> str:
@@ -17,8 +17,9 @@ def _get_dict_str_hash(some_dict: Dict) -> str:
 
 
 class SignalStream:
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis, logger: logging.Logger):
         self.redis_client = redis_client
+        self.logger = logger
 
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
@@ -27,14 +28,14 @@ class SignalStream:
             if not await self.redis_client.sismember(
                 DEFAULT_SET_NAME, hash_id
             ):
-                logger.info("Writing new entry to stream %s", stream_data)
+                self.logger.info("Writing new entry to stream %s", stream_data)
                 await self.redis_client.sadd(DEFAULT_SET_NAME, hash_id)
                 message_id = await self.redis_client.xadd(
                     DEFAULT_STREAM_NAME, data
                 )
                 return str(message_id)
         except Exception as e:
-            logger.error(
+            self.logger.error(
                 "Error while trying to write new message to signal-stream, error is %s",
                 e,
             )

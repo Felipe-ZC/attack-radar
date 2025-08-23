@@ -10,7 +10,7 @@ import yaml
 from .core.models import Source
 from .shared.constants import SourceType
 
-
+# TODO: This should be called load_sources not load_config... 
 def load_config(config_file_path: Path) -> List[Source]:
     file_path = config_file_path.resolve()
 

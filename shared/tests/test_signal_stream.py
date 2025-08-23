@@ -2,12 +2,12 @@ from typing import List
 from unittest.mock import AsyncMock
 from dataclasses import asdict
 
-from src.signal_sweep.core.signal_stream import (
+from src.shared.signal_stream import (
     SignalStream,
     _get_dict_str_hash,
 )
-from src.signal_sweep.core.models import StreamData
-from src.signal_sweep.shared.constants import (
+from src.shared.models import StreamData
+from src.shared.constants import (
     DEFAULT_SET_NAME,
     DEFAULT_STREAM_NAME,
 )
