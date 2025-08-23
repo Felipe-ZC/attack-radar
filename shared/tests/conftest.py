@@ -23,6 +23,7 @@ def mock_redis_client() -> AsyncMock:
 
     return mock_client
 
+
 @pytest.fixture
 def sample_stream_data() -> List[StreamData]:
     """Sample StreamData objects for testing."""

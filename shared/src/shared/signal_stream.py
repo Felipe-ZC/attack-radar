@@ -6,6 +6,7 @@ from typing import Dict
 from dataclasses import asdict
 import redis.asyncio as redis
 
+from .logger import setup_logger, get_log_level_from_env
 from .models import StreamData
 from .constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
@@ -17,7 +18,13 @@ def get_dict_str_hash(some_dict: Dict) -> str:
 
 
 class SignalStream:
-    def __init__(self, redis_client: redis.Redis, logger: logging.Logger):
+    def __init__(
+        self,
+        redis_client: redis.Redis,
+        logger: logging.Logger = setup_logger(
+            name="SignalStream", log_level=get_log_level_from_env()
+        ),
+    ):
         self.redis_client = redis_client
         self.logger = logger
 

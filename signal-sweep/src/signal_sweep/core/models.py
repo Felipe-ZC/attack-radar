@@ -7,5 +7,3 @@ from ..shared.constants import SourceType
 class Source:
     url: str
     type: SourceType
-
-
