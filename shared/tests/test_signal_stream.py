@@ -2,12 +2,12 @@ from typing import List
 from unittest.mock import AsyncMock
 from dataclasses import asdict
 
-from src.shared.signal_stream import (
+from shared import (
     SignalStream,
-    _get_dict_str_hash,
+    get_dict_str_hash,
 )
-from src.shared.models import StreamData
-from src.shared.constants import (
+from shared.models import StreamData
+from shared.constants import (
     DEFAULT_SET_NAME,
     DEFAULT_STREAM_NAME,
 )
@@ -22,7 +22,7 @@ async def test_write_stream_data(
     for stream_data in sample_stream_data:
         await signal_stream.write_stream_data(stream_data)
         stream_data_as_dict = asdict(stream_data)
-        hash_id = _get_dict_str_hash(stream_data_as_dict)
+        hash_id = get_dict_str_hash(stream_data_as_dict)
 
         mock_redis_client.sismember.assert_called_with(
             DEFAULT_SET_NAME, hash_id
@@ -45,7 +45,7 @@ async def test_write_stream_data_dedupe(
     for stream_data in sample_stream_data:
         await signal_stream.write_stream_data(stream_data)
         stream_data_as_dict = asdict(stream_data)
-        hash_id = _get_dict_str_hash(stream_data_as_dict)
+        hash_id = get_dict_str_hash(stream_data_as_dict)
 
         mock_redis_client.sismember.assert_called_with(
             DEFAULT_SET_NAME, hash_id

@@ -1,12 +1,11 @@
 # UV workspace configuration
 [tool.uv.workspace]
 members = ["shared", "signal-sweep"]
-# Add other service directories as you create them
 
 [project]
-name = "data-pipeline-dev"
+name = "attack-radar-dev-kit"
 version = "0.1.0"
-description = "Development tooling for data pipeline services"
+description = "Development tooling for attack-radar services services"
 requires-python = ">=3.9"
 
 # UV Scripts for common development tasks
@@ -24,6 +23,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.14.0",
     "ruff>=0.1.0",
 ]
 
@@ -108,6 +108,7 @@ force-sort-within-sections = true
 # Pytest configuration
 [tool.pytest.ini_options]
 # Test discovery patterns
+asyncio_mode = "auto"
 testpaths = ["tests", "*/tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]

@@ -10,7 +10,7 @@ from .models import StreamData
 from .constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
 
-def _get_dict_str_hash(some_dict: Dict) -> str:
+def get_dict_str_hash(some_dict: Dict) -> str:
     return hashlib.sha256(
         json.dumps(some_dict, sort_keys=True).encode()
     ).hexdigest()
@@ -24,7 +24,7 @@ class SignalStream:
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
             data = asdict(stream_data)
-            hash_id = _get_dict_str_hash(data)
+            hash_id = get_dict_str_hash(data)
             if not await self.redis_client.sismember(
                 DEFAULT_SET_NAME, hash_id
             ):
