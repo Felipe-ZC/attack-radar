@@ -9,9 +9,7 @@ from .constants import DEFAULT_REDIS_DB, DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT
 class CoreContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
     logger = providers.Factory(
-        setup_logger,
-        name=config.service_name,
-        log_level=(config.log_level)
+        setup_logger, name=config.service_name, log_level=(config.log_level)
     )
 
     config.redis_host.from_env("REDIS_HOST", DEFAULT_REDIS_HOST)

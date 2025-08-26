@@ -8,7 +8,7 @@ from logging.handlers import RotatingFileHandler
 def get_log_level_from_env() -> int:
     """Get log level from environment variable or use default"""
     log_level_str: str = os.getenv("LOG_LEVEL", "INFO").upper()
-    print(f'in get_log_level_from_env, log_level_str is: {log_level_str}')
+    print(f"in get_log_level_from_env, log_level_str is: {log_level_str}")
 
     # Map string log levels to logging module constants
     level_map: dict[str, int] = {
@@ -31,7 +31,7 @@ def setup_logger(
 
     # If the logger has not been setup yet...
     if not logger.handlers:
-        print(f'log_level is: {log_level}')
+        print(f"log_level is: {log_level}")
         logger.setLevel(log_level)
 
         formatter: logging.Formatter = logging.Formatter(

@@ -66,5 +66,6 @@ async def bootstrap() -> None:
     container.wire(modules=[__name__])
     await main()
 
+
 if __name__ == "__main__":
     asyncio.run(bootstrap())
