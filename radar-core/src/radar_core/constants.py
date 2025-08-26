@@ -1,5 +1,9 @@
-DEFAULT_STREAM_NAME = "signal-stream"
+import logging
+
+# DEFAULT_STREAM_NAME = "signal-stream"
+DEFAULT_STREAM_NAME = "localhost"
 DEFAULT_SET_NAME = "signal-stream-set"
 DEFAULT_REDIS_PORT = "6379"
 DEFAULT_REDIS_DB = 1
 DEFAULT_REDIS_HOST = DEFAULT_STREAM_NAME
+DEFAULT_LOG_LEVEL = logging.INFO

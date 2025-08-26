@@ -1,13 +1,15 @@
 from dependency_injector import containers, providers
 import redis.asyncio as redis
 
-from .constants import DEFAULT_REDIS_DB, DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT
+from .constants import DEFAULT_REDIS_DB, DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT, DEFAULT_LOG_LEVEL
 from .logger import setup_logger
 from .signal_stream import SignalStream
 
 
 class CoreContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
+    config.redis_host.from_env("LOG_LEVEL", DEFAULT_LOG_LEVEL)
+
     logger = providers.Factory(
         setup_logger, name=config.service_name, log_level=(config.log_level)
     )
