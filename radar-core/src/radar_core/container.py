@@ -14,9 +14,9 @@ class CoreContainer(containers.DeclarativeContainer):
         log_level=(config.log_level)
     )
 
-    config.redis_host.from_value(DEFAULT_REDIS_HOST)
-    config.redis_port.from_value(DEFAULT_REDIS_PORT)
-    config.redis_db.from_value(DEFAULT_REDIS_DB)
+    config.redis_host.from_env("REDIS_HOST", DEFAULT_REDIS_HOST)
+    config.redis_port.from_env("REDIS_PORT", DEFAULT_REDIS_PORT)
+    config.redis_db.from_env("REDIS_DB", DEFAULT_REDIS_DB)
 
     redis_client = providers.Resource(
         redis.Redis,
