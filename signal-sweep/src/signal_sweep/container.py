@@ -1,36 +1,38 @@
-# src/signal_sweep/container.py
-from dependency_injector import containers, providers
+from dependency_injector import providers
 
 import httpx
-import redis.asyncio as redis
 
-from .core.signal_stream import SignalStream
-from .shared.constants import SourceType
+from radar_core import CoreContainer
+from radar_core.models import SourceType
+
+from .config import load_config, get_config_file_path
+from .core.handlers import TextHandler
 from .shared.utils import AsyncProcessPoolExecutor
-from .core.handlers.text_handler import TextHandler
+from .shared.constants import DEFAULT_BATCH_SIZE
 
 
-class ApplicationContainer(containers.DeclarativeContainer):
-    config = providers.Configuration()
+class ApplicationContainer(CoreContainer):
+    def __init__(self):
+        super().__init__()
 
-    # Resources
-    redis_client = providers.Resource(
-        redis.Redis,
-        host=config.redis_host,
-        port=config.redis_port,
-        db=config.redis_db,
-        decode_responses=True,
-    )
-    http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
-    process_executor = providers.Resource(
-        AsyncProcessPoolExecutor, max_workers=config.max_workers
-    )
+        self.config.redis_host.from_env("REDIS_HOST")
+        self.config.redis_port.from_env("REDIS_PORT")
+        self.config.redis_db.from_env("REDIS_DB")
 
-    # Services
-    signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
-    text_handler = providers.Factory(
-        TextHandler, http_client=http_client, process_executor=process_executor
-    )
+        self.config.max_workers.from_value(DEFAULT_BATCH_SIZE)
+        self.config.sources.from_value(load_config(get_config_file_path()))
 
-    # Utilities
-    handler_mapping = providers.Dict({SourceType.TXT: text_handler})
+        self.config.service_name.from_value("signal_sweep")
+        self.http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
+        self.process_executor = providers.Resource(
+            AsyncProcessPoolExecutor, max_workers=self.config.max_workers
+        )
+
+        # Services
+        self.text_handler = providers.Factory(
+            TextHandler, http_client=self.http_client, process_executor=self.process_executor
+        )
+
+        # Utilities
+        self.handler_mapping = providers.Dict({SourceType.TXT: self.text_handler})
+
