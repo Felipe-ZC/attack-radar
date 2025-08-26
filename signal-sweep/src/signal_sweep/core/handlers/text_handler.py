@@ -9,8 +9,9 @@ import re
 
 import httpx
 
+from radar_core.models import StreamData
+
 from .base_handler import Handler
-from ..models import StreamData
 from ..models import Source
 from ...shared.constants import IP_V4_REGEX
 

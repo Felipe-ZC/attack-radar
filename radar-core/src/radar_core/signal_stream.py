@@ -30,6 +30,7 @@ class SignalStream:
 
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
+            print(f'in write_stream_data, stream_data is {stream_data}')
             data = asdict(stream_data)
             hash_id = get_dict_str_hash(data)
             if not await self.redis_client.sismember(

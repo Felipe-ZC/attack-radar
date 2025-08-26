@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "shared"
+name = "radar-core"
 version = "0.1.0"
-description = "The shared package for the attack-radar data pipeline"
+description = "The radar-core package for the attack-radar data pipeline"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

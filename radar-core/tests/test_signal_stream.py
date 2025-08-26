@@ -2,12 +2,12 @@ from typing import List
 from unittest.mock import AsyncMock
 from dataclasses import asdict
 
-from shared import (
+from radar_core import (
     SignalStream,
     get_dict_str_hash,
 )
-from shared.models import StreamData
-from shared.constants import (
+from radar_core.models import StreamData
+from radar_core.constants import (
     DEFAULT_SET_NAME,
     DEFAULT_STREAM_NAME,
 )

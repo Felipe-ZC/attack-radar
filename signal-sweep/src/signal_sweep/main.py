@@ -1,29 +1,29 @@
 import asyncio
-import logging.Logger
 from typing import List, Dict
+from logging import Logger
 
 from dependency_injector.wiring import Provide, inject
 
+from radar_core import SignalStream, get_log_level_from_env
+from radar_core.models import StreamData
 
+
+from .config import load_config, get_config_file_path
 from .core.models import Source
 from .shared.constants import SourceType, DEFAULT_BATCH_SIZE
 from .core.handlers.base_handler import Handler
 from .container import ApplicationContainer
-from .core.signal_stream import SignalStream
-from .core.models import StreamData
 from .shared.utils import async_batch_process_list
-
-from .config import load_config
 
 
 @inject
 async def handle_data_source(
     source: Source,
+    signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
+    logger: Logger = Provide[ApplicationContainer.logger],
     handler_mapping: Dict[SourceType, Handler] = Provide[
         ApplicationContainer.handler_mapping
     ],
-    signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
-    logger: logging.Logger = Provide[ApplicationContainer.logger],
 ) -> List[StreamData]:
     logger.info("Handling data source %s", source)
     handler = handler_mapping[source.type]
@@ -34,7 +34,7 @@ async def handle_data_source(
 async def ingest_stream_data(
     stream_data: StreamData,
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
-    logger: logging.Logger = Provide[ApplicationContainer.logger],
+    logger: Logger = Provide[ApplicationContainer.logger],
 ) -> List[StreamData]:
     logger.info("Ingesting data %s", stream_data)
     return await signal_stream.write_stream_data(stream_data)
@@ -60,17 +60,11 @@ async def main(
 
 async def bootstrap() -> None:
     container = ApplicationContainer()
-
-    # container.config.redis_host.from_env("REDIS_HOST")
-    # container.config.redis_port.from_env("REDIS_PORT")
-    # container.config.redis_db.from_env("REDIS_DB")
-    #
-    # container.config.max_workers.override(DEFAULT_BATCH_SIZE)
-    # container.config.sources.override(load_config(get_config_file_path()))
+    container.config.sources.from_value(load_config(get_config_file_path()))
+    container.config.service_name.from_value("SignalSweep")
+    container.config.log_level.from_value(get_log_level_from_env())
     container.wire(modules=[__name__])
-
     await main()
-
 
 if __name__ == "__main__":
     asyncio.run(bootstrap())

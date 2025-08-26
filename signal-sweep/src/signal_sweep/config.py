@@ -20,6 +20,7 @@ def get_config_file_path() -> Path:
         "--config", help="The path to the data_sources.yml file", required=True
     )
     args = parser.parse_args()
+    print(f'in get_config_file_path, args are: {args}')
     return Path(args.config)
 
 

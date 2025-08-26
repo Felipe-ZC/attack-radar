@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from ..models import StreamData
+from radar_core.models import StreamData
 
 
 class Handler(ABC):

@@ -13,7 +13,8 @@ services:
 
   signal-sweep:
     build: 
-      context: ./signal-sweep
+      context: .
+      dockerfile: ./signal-sweep/Dockerfile
     depends_on:
       - signal-stream
     environment:
