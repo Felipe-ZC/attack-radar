@@ -8,15 +8,15 @@ from .signal_stream import SignalStream
 
 class CoreContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
+
     config.redis_host.from_env("LOG_LEVEL", DEFAULT_LOG_LEVEL)
+    config.redis_host.from_env("REDIS_HOST", DEFAULT_REDIS_HOST)
+    config.redis_port.from_env("REDIS_PORT", DEFAULT_REDIS_PORT)
+    config.redis_db.from_env("REDIS_DB", DEFAULT_REDIS_DB)
 
     logger = providers.Factory(
         setup_logger, name=config.service_name, log_level=(config.log_level)
     )
-
-    config.redis_host.from_env("REDIS_HOST", DEFAULT_REDIS_HOST)
-    config.redis_port.from_env("REDIS_PORT", DEFAULT_REDIS_PORT)
-    config.redis_db.from_env("REDIS_DB", DEFAULT_REDIS_DB)
 
     redis_client = providers.Resource(
         redis.Redis,
