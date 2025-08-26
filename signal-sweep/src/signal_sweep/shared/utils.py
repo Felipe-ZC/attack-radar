@@ -1,7 +1,6 @@
 import asyncio
-
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional, List, Callable
+from typing import Callable, Optional
 
 
 class AsyncProcessPoolExecutor:
@@ -19,7 +18,7 @@ class AsyncProcessPoolExecutor:
 
 
 async def async_batch_process_list(
-    list_data: List, batch_size: int, process: Callable
+    list_data: list, batch_size: int, process: Callable
 ):
     results = []
     for i in range(0, len(list_data), batch_size):

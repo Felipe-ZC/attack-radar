@@ -1,17 +1,16 @@
-import json
-import hashlib
-import logging
-from typing import Dict
-
 from dataclasses import asdict
+import hashlib
+import json
+import logging
+
 import redis.asyncio as redis
 
-from .logger import setup_logger, get_log_level_from_env
+from .constants import DEFAULT_SET_NAME, DEFAULT_STREAM_NAME
+from .logger import get_log_level_from_env, setup_logger
 from .models import StreamData
-from .constants import DEFAULT_STREAM_NAME, DEFAULT_SET_NAME
 
 
-def get_dict_str_hash(some_dict: Dict) -> str:
+def get_dict_str_hash(some_dict: dict) -> str:
     return hashlib.sha256(
         json.dumps(some_dict, sort_keys=True).encode()
     ).hexdigest()

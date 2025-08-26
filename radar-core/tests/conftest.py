@@ -1,10 +1,8 @@
-from typing import List
 from unittest.mock import AsyncMock
 
 import pytest
-import redis.asyncio as redis
-
 from radar_core.models import StreamData
+import redis.asyncio as redis
 
 
 @pytest.fixture
@@ -25,7 +23,7 @@ def mock_redis_client() -> AsyncMock:
 
 
 @pytest.fixture
-def sample_stream_data() -> List[StreamData]:
+def sample_stream_data() -> list[StreamData]:
     """Sample StreamData objects for testing."""
     return [
         StreamData(

@@ -1,12 +1,10 @@
 from dependency_injector import providers
-
 import httpx
-
 from radar_core import CoreContainer
 
 from .core.handlers.text_handler import TextHandler
-from .shared.utils import AsyncProcessPoolExecutor
 from .shared.constants import DEFAULT_BATCH_SIZE, SourceType
+from .shared.utils import AsyncProcessPoolExecutor
 
 
 class ApplicationContainer(CoreContainer):

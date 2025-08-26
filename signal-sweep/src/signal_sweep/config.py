@@ -3,8 +3,6 @@ Configuration classes and other config utilites.
 """
 
 import argparse
-
-from typing import List
 from pathlib import Path
 
 import yaml
@@ -26,10 +24,10 @@ def get_config_file_path() -> Path:
 
 
 # TODO: This should be called load_sources not load_config...
-def load_config(config_file_path: Path) -> List[Source]:
+def load_config(config_file_path: Path) -> list[Source]:
     file_path = config_file_path.resolve()
 
-    with open(file_path, mode="r") as config_file:
+    with open(file_path) as config_file:
         config_dict = yaml.safe_load(config_file)
 
     return [

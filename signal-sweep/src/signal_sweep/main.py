@@ -1,18 +1,15 @@
 import asyncio
-from typing import List, Dict
 from logging import Logger
 
 from dependency_injector.wiring import Provide, inject
-
 from radar_core import SignalStream, get_log_level_from_env
 from radar_core.models import StreamData
 
-
-from .config import load_config, get_config_file_path
-from .core.models import Source
-from .shared.constants import SourceType, DEFAULT_BATCH_SIZE
-from .core.handlers.base_handler import Handler
+from .config import get_config_file_path, load_config
 from .container import ApplicationContainer
+from .core.handlers.base_handler import Handler
+from .core.models import Source
+from .shared.constants import DEFAULT_BATCH_SIZE, SourceType
 from .shared.utils import async_batch_process_list
 
 
@@ -21,10 +18,10 @@ async def handle_data_source(
     source: Source,
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
     logger: Logger = Provide[ApplicationContainer.logger],
-    handler_mapping: Dict[SourceType, Handler] = Provide[
+    handler_mapping: dict[SourceType, Handler] = Provide[
         ApplicationContainer.handler_mapping
     ],
-) -> List[StreamData]:
+) -> list[StreamData]:
     logger.info("Handling data source %s", source)
     handler = handler_mapping[source.type]
     return await handler.handle(source)
@@ -35,24 +32,24 @@ async def ingest_stream_data(
     stream_data: StreamData,
     signal_stream: SignalStream = Provide[ApplicationContainer.signal_stream],
     logger: Logger = Provide[ApplicationContainer.logger],
-) -> List[StreamData]:
+) -> list[StreamData]:
     logger.info("Ingesting data %s", stream_data)
     return await signal_stream.write_stream_data(stream_data)
 
 
 @inject
 async def main(
-    data_sources: List[Source] = Provide[ApplicationContainer.config.sources],
-) -> List[str]:
-    stream_data_lists: List[List[StreamData]] = await async_batch_process_list(
+    data_sources: list[Source] = Provide[ApplicationContainer.config.sources],
+) -> list[str]:
+    stream_data_lists: list[list[StreamData]] = await async_batch_process_list(
         data_sources, DEFAULT_BATCH_SIZE, handle_data_source
     )
-    flattend_stream_data_list: List[StreamData] = [
+    flattend_stream_data_list: list[StreamData] = [
         stream_data
         for stream_data_list in stream_data_lists
         for stream_data in stream_data_list
     ]
-    message_ids: List[str] = await async_batch_process_list(
+    message_ids: list[str] = await async_batch_process_list(
         flattend_stream_data_list, DEFAULT_BATCH_SIZE * 10, ingest_stream_data
     )
     return message_ids

@@ -1,8 +1,7 @@
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 import sys
-import logging
-
-from logging.handlers import RotatingFileHandler
 
 
 def get_log_level_from_env() -> int:
