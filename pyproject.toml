@@ -6,22 +6,6 @@ members = ["radar-core", "signal-sweep"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# [project]
-# name = "attack-radar-dev-kit"
-# version = "0.1.0"
-# description = "Development tooling for attack-radar services services"
-# requires-python = ">=3.9"
-
-# UV Scripts for common development tasks
-# [project.scripts]
-# test = "pytest"
-# test-integration = "pytest -m integration"
-# lint = "ruff check ."
-# lint-fix = "ruff check --fix ."
-# format = "ruff format ."
-# format-check = "ruff format --check ."
-# check-all = "python -c 'import subprocess; subprocess.run([\"ruff\", \"check\", \".\"]); subprocess.run([\"ruff\", \"format\", \"--check\", \".\"]); subprocess.run([\"pytest\"])'"
-#
 [dependency-groups]
 dev = [
     "pytest>=7.0.0",
