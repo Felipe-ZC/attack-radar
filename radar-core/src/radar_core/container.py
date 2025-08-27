@@ -1,7 +1,12 @@
 from dependency_injector import containers, providers
 import redis.asyncio as redis
 
-from .constants import DEFAULT_REDIS_DB, DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT, DEFAULT_LOG_LEVEL
+from .constants import (
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_REDIS_DB,
+    DEFAULT_REDIS_HOST,
+    DEFAULT_REDIS_PORT,
+)
 from .logger import setup_logger
 from .signal_stream import SignalStream
 
