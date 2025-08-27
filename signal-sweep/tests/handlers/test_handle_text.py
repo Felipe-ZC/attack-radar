@@ -2,7 +2,7 @@ from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 from itertools import product
 
-from rade_core.models import StreamData
+from radar_core.models import StreamData
 
 from signal_sweep.core.handlers.text_handler import (
     TextHandler,
