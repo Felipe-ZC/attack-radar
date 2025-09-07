@@ -22,7 +22,7 @@ class CoreContainer(containers.DeclarativeContainer):
     logger = providers.Factory(
         setup_logger,
         name=config.service_name,
-        log_level=(LOG_LEVEL_MAP.get(config.log_level)),
+        log_level_str=config.log_level,
     )
 
     redis_client = providers.Resource(
