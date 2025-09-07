@@ -5,8 +5,8 @@ import logging
 
 import redis.asyncio as redis
 
-from .constants import DEFAULT_SET_NAME, DEFAULT_STREAM_NAME, DEFAULT_LOG_LEVEL
-from .logger import get_log_level_from_env, setup_logger
+from .constants import DEFAULT_LOG_LEVEL, DEFAULT_SET_NAME, DEFAULT_STREAM_NAME
+from .logger import setup_logger
 from .models import StreamData
 
 

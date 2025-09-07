@@ -7,7 +7,7 @@ from .constants import (
     DEFAULT_REDIS_HOST,
     DEFAULT_REDIS_PORT,
 )
-from .logger import LOG_LEVEL_MAP, setup_logger
+from .logger import setup_logger
 from .signal_stream import SignalStream
 
 

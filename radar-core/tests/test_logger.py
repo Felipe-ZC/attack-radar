@@ -2,7 +2,11 @@ import logging
 import os
 from unittest.mock import patch
 
-from radar_core.logger import get_log_level_from_env, setup_logger, LOG_LEVEL_MAP
+from radar_core.logger import (
+    LOG_LEVEL_MAP,
+    get_log_level_from_env,
+    setup_logger,
+)
 
 
 def test_get_log_level_from_env():
