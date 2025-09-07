@@ -3,27 +3,23 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 
+LOG_LEVEL_MAP: dict[str, int] = {
+    "DEBUG": logging.DEBUG,  # 10
+    "INFO": logging.INFO,  # 20
+    "WARNING": logging.WARNING,  # 30
+    "ERROR": logging.ERROR,  # 40
+    "CRITICAL": logging.CRITICAL,  # 50
+}
+
 
 def get_log_level_from_env() -> int:
     """Get log level from environment variable or use default"""
     log_level_str: str = os.getenv("LOG_LEVEL", "INFO").upper()
-    print(f"in get_log_level_from_env, log_level_str is: {log_level_str}")
-
-    # Map string log levels to logging module constants
-    level_map: dict[str, int] = {
-        "DEBUG": logging.DEBUG,  # 10
-        "INFO": logging.INFO,  # 20
-        "WARNING": logging.WARNING,  # 30
-        "ERROR": logging.ERROR,  # 40
-        "CRITICAL": logging.CRITICAL,  # 50
-    }
-
-    # Return the mapped level or default to INFO if invalid
-    return level_map.get(log_level_str, logging.INFO)
+    return LOG_LEVEL_MAP.get(log_level_str, logging.INFO)
 
 
 def setup_logger(
-    name: str = "pybiztools", log_level: int = logging.INFO
+    name: str = "attack-radar", log_level: int = logging.INFO
 ) -> logging.Logger:
     """Setup app wide logging utiltity"""
     logger: logging.Logger = logging.getLogger(name)

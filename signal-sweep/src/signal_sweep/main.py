@@ -61,7 +61,11 @@ async def bootstrap() -> None:
     container.config.service_name.from_value("SignalSweep")
     container.config.log_level.from_value(get_log_level_from_env())
     container.wire(modules=[__name__])
-    await main()
+
+    try:
+        await main()
+    finally:
+        container.shutdown_resources()
 
 
 if __name__ == "__main__":

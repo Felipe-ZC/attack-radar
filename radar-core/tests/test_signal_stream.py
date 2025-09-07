@@ -26,9 +26,7 @@ async def test_write_stream_data(
         mock_redis_client.sismember.assert_called_with(
             DEFAULT_SET_NAME, hash_id
         )
-
         mock_redis_client.sadd.assert_called_with(DEFAULT_SET_NAME, hash_id)
-
         mock_redis_client.xadd.assert_called_with(
             DEFAULT_STREAM_NAME, stream_data_as_dict
         )

@@ -7,20 +7,22 @@ from .constants import (
     DEFAULT_REDIS_HOST,
     DEFAULT_REDIS_PORT,
 )
-from .logger import setup_logger
+from .logger import LOG_LEVEL_MAP, setup_logger
 from .signal_stream import SignalStream
 
 
 class CoreContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
-    config.redis_host.from_env("LOG_LEVEL", DEFAULT_LOG_LEVEL)
-    config.redis_host.from_env("REDIS_HOST", DEFAULT_REDIS_HOST)
-    config.redis_port.from_env("REDIS_PORT", DEFAULT_REDIS_PORT)
-    config.redis_db.from_env("REDIS_DB", DEFAULT_REDIS_DB)
+    config.log_level.from_value(DEFAULT_LOG_LEVEL)
+    config.redis_host.from_value(DEFAULT_REDIS_HOST)
+    config.redis_port.from_value(DEFAULT_REDIS_PORT)
+    config.redis_db.from_value(DEFAULT_REDIS_DB)
 
     logger = providers.Factory(
-        setup_logger, name=config.service_name, log_level=(config.log_level)
+        setup_logger,
+        name=config.service_name,
+        log_level=(LOG_LEVEL_MAP.get(config.log_level)),
     )
 
     redis_client = providers.Resource(
@@ -32,3 +34,10 @@ class CoreContainer(containers.DeclarativeContainer):
     )
 
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
+
+
+def configure_container_from_env(container: CoreContainer):
+    container.config.log_level.from_env("LOG_LEVEL")
+    container.config.redis_host.from_env("REDIS_HOST")
+    container.config.redis_port.from_env("REDIS_PORT")
+    container.config.redis_db.from_env("REDIS_DB")
