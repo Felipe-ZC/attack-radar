@@ -22,11 +22,19 @@ MOCK_ENV = {
 
 async def test_container_creation_with_default_values():
     container = CoreContainer()
+    container.config.service_name.from_value(
+        "test_container_creation_with_default_values"
+    )
 
     assert container.config.log_level() == DEFAULT_LOG_LEVEL
     assert container.config.redis_port() == DEFAULT_REDIS_PORT
     assert container.config.redis_host() == DEFAULT_REDIS_HOST
     assert container.config.redis_db() == DEFAULT_REDIS_DB
+
+    logger = container.logger()
+    assert (
+        logger.level == LOG_LEVEL_MAP[DEFAULT_LOG_LEVEL]
+    )
 
     # NOTE: redis.Redis() does not immedieately estbalish a connection to Redis...
     redis_client = await container.redis_client()
@@ -61,7 +69,7 @@ async def test_container_creation_with_env_vars():
 
         logger = container.logger()
         assert (
-            logger.getEffectiveLevel() == LOG_LEVEL_MAP[os.getenv("LOG_LEVEL")]
+            logger.level == LOG_LEVEL_MAP[os.getenv("LOG_LEVEL")]
         )
         # NOTE: redis.Redis() does not immedieately estbalish a connection to Redis...
         redis_client = await container.redis_client()
