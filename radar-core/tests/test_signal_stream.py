@@ -1,15 +1,45 @@
 from dataclasses import asdict
-from unittest.mock import AsyncMock
+from itertools import product
+from unittest.mock import AsyncMock, Mock
 
-from radar_core import (
-    SignalStream,
-    get_dict_str_hash,
-)
+import redis.exceptions
+
+from radar_core import SignalStream, get_dict_str_hash
 from radar_core.constants import (
     DEFAULT_SET_NAME,
     DEFAULT_STREAM_NAME,
 )
 from radar_core.models import StreamData
+
+
+async def test_write_stream_data_with_handled_errors(
+    mock_logger: Mock,
+    mock_redis_client: AsyncMock,
+    sample_stream_data: list[StreamData],
+):
+    redis_errors = [
+        redis.exceptions.ConnectionError,
+        redis.exceptions.TimeoutError,
+    ]
+    mock_redis_funcs = [
+        mock_redis_client.sismember,
+        mock_redis_client.sadd,
+        mock_redis_client.xadd,
+    ]
+
+    for mock_redis_func, redis_error in product(
+        mock_redis_funcs, redis_errors
+    ):
+        mock_redis_func.side_effect = redis_error()
+        signal_stream = SignalStream(
+            redis_client=mock_redis_client, logger=mock_logger
+        )
+
+        for stream_data in sample_stream_data:
+            await signal_stream.write_stream_data(stream_data)
+            mock_redis_func.assert_called()
+
+        mock_redis_func.side_effect = None
 
 
 async def test_write_stream_data(

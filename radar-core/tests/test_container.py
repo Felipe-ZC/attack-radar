@@ -32,9 +32,7 @@ async def test_container_creation_with_default_values():
     assert container.config.redis_db() == DEFAULT_REDIS_DB
 
     logger = container.logger()
-    assert (
-        logger.level == LOG_LEVEL_MAP[DEFAULT_LOG_LEVEL]
-    )
+    assert logger.level == LOG_LEVEL_MAP[DEFAULT_LOG_LEVEL]
 
     # NOTE: redis.Redis() does not immedieately estbalish a connection to Redis...
     redis_client = await container.redis_client()
@@ -68,9 +66,7 @@ async def test_container_creation_with_env_vars():
         assert container.config.redis_db() == os.getenv("REDIS_DB")
 
         logger = container.logger()
-        assert (
-            logger.level == LOG_LEVEL_MAP[os.getenv("LOG_LEVEL")]
-        )
+        assert logger.level == LOG_LEVEL_MAP[os.getenv("LOG_LEVEL")]
         # NOTE: redis.Redis() does not immedieately estbalish a connection to Redis...
         redis_client = await container.redis_client()
         assert isinstance(redis_client, redis.Redis)

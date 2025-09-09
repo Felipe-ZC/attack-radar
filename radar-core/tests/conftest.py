@@ -1,8 +1,13 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from radar_core.models import StreamData
 import redis.asyncio as redis
+
+
+@pytest.fixture
+def mock_logger():
+    return Mock(spec=["debug", "info", "warning", "error", "critical"])
 
 
 @pytest.fixture

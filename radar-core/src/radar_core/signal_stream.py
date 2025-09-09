@@ -4,6 +4,7 @@ import json
 import logging
 
 import redis.asyncio as redis
+import redis.exceptions
 
 from .constants import DEFAULT_LOG_LEVEL, DEFAULT_SET_NAME, DEFAULT_STREAM_NAME
 from .logger import setup_logger
@@ -15,6 +16,17 @@ def get_dict_str_hash(some_dict: dict) -> str:
         json.dumps(some_dict, sort_keys=True).encode()
     ).hexdigest()
 
+
+def log_error(
+    logger: logging.Logger,
+    error_name: str,
+    error_message: str
+) -> None:
+    logger.error(
+        "%s raised when trying to write a new message to signal-stream, error is: %s",
+        error_name,
+        error_message
+    )
 
 class SignalStream:
     def __init__(
@@ -41,11 +53,11 @@ class SignalStream:
                     DEFAULT_STREAM_NAME, data
                 )
                 return message_id
-        # TODO: Check what error sismember, sadd and xadd raise and catch them here...
-        except Exception as e:
-            self.logger.error(
-                "Error while trying to write new message to signal-stream, error is %s",
-                e,
-            )
-            raise e
+        # TODO: Add re-try logic for the two redis exceptions...
+        except redis.exceptions.ConnectionError as connection_err:
+            log_error(self.logger, "Redis connection error", str(connection_err))
+        except redis.exceptions.TimeoutError as timeout_err:
+            log_error(self.logger, "Redis timeout error", str(timeout_err))
+        except Exception as unhandled_err:
+            log_error(self.logger, "Unhandled error", str(unhandled_err))
         return ""
