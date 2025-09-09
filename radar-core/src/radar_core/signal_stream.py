@@ -61,4 +61,5 @@ class SignalStream:
             log_error(self.logger, "Redis timeout error", str(timeout_err))
         except Exception as unhandled_err:
             log_error(self.logger, "Unhandled error", str(unhandled_err))
+            raise unhandled_err
         return ""
