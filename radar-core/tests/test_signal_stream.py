@@ -2,14 +2,13 @@ from dataclasses import asdict
 from itertools import product
 from unittest.mock import AsyncMock, Mock
 
-import redis.exceptions
-
 from radar_core import SignalStream, get_dict_str_hash
 from radar_core.constants import (
     DEFAULT_SET_NAME,
     DEFAULT_STREAM_NAME,
 )
 from radar_core.models import StreamData
+import redis.exceptions
 
 
 async def test_write_stream_data_with_handled_errors(

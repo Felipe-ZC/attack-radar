@@ -18,15 +18,14 @@ def get_dict_str_hash(some_dict: dict) -> str:
 
 
 def log_error(
-    logger: logging.Logger,
-    error_name: str,
-    error_message: str
+    logger: logging.Logger, error_name: str, error_message: str
 ) -> None:
     logger.error(
         "%s raised when trying to write a new message to signal-stream, error is: %s",
         error_name,
-        error_message
+        error_message,
     )
+
 
 class SignalStream:
     def __init__(
@@ -55,7 +54,9 @@ class SignalStream:
                 return message_id
         # TODO: Add re-try logic for the two redis exceptions...
         except redis.exceptions.ConnectionError as connection_err:
-            log_error(self.logger, "Redis connection error", str(connection_err))
+            log_error(
+                self.logger, "Redis connection error", str(connection_err)
+            )
         except redis.exceptions.TimeoutError as timeout_err:
             log_error(self.logger, "Redis timeout error", str(timeout_err))
         except Exception as unhandled_err:
