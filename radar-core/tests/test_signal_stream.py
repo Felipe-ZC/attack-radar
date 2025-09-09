@@ -25,6 +25,10 @@ async def test_write_stream_data_with_handled_errors(
         mock_redis_client.sadd,
         mock_redis_client.xadd,
     ]
+    error_to_name_dict = {
+        redis.exceptions.ConnectionError: "Redis connection error",
+        redis.exceptions.TimeoutError: "Redis timeout error",
+    }
 
     for mock_redis_func, redis_error in product(
         mock_redis_funcs, redis_errors
@@ -37,6 +41,11 @@ async def test_write_stream_data_with_handled_errors(
         for stream_data in sample_stream_data:
             await signal_stream.write_stream_data(stream_data)
             mock_redis_func.assert_called()
+            mock_logger.error.assert_called_with(
+                "%s raised when trying to write a new message to signal-stream, error is: %s",
+                error_to_name_dict[redis_error],
+                str(redis_error()),
+            )
 
         mock_redis_func.side_effect = None
 
