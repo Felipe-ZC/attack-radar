@@ -1,36 +1,25 @@
-# src/signal_sweep/container.py
-from dependency_injector import containers, providers
-
+from dependency_injector import providers
 import httpx
-import redis.asyncio as redis
+from radar_core import CoreContainer
 
-from .core.signal_stream import SignalStream
-from .shared.constants import SourceType
-from .shared.utils import AsyncProcessPoolExecutor
 from .core.handlers.text_handler import TextHandler
+from .shared.constants import DEFAULT_BATCH_SIZE, SourceType
+from .shared.utils import AsyncProcessPoolExecutor
 
 
-class ApplicationContainer(containers.DeclarativeContainer):
-    config = providers.Configuration()
-
-    # Resources
-    redis_client = providers.Resource(
-        redis.Redis,
-        host=config.redis_host,
-        port=config.redis_port,
-        db=config.redis_db,
-        decode_responses=True,
-    )
+class ApplicationContainer(CoreContainer):
     http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
     process_executor = providers.Resource(
-        AsyncProcessPoolExecutor, max_workers=config.max_workers
+        AsyncProcessPoolExecutor, max_workers=DEFAULT_BATCH_SIZE
     )
-
-    # Services
-    signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
     text_handler = providers.Factory(
         TextHandler, http_client=http_client, process_executor=process_executor
     )
-
-    # Utilities
     handler_mapping = providers.Dict({SourceType.TXT: text_handler})
+
+    def __init__(self):
+        super().__init__()
+        self.config.redis_host.from_env("REDIS_HOST")
+        self.config.redis_port.from_env("REDIS_PORT")
+        self.config.redis_db.from_env("REDIS_DB")
+        self.config.service_name.from_value("signal_sweep")

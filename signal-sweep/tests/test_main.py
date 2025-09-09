@@ -1,10 +1,11 @@
 from typing import List
 
 from unittest.mock import AsyncMock, patch
+from radar_core.models import StreamData
 
 from signal_sweep.main import main
 from signal_sweep.container import ApplicationContainer
-from signal_sweep.core.models import StreamData, Source
+from signal_sweep.core.models import Source
 
 
 @patch("signal_sweep.main.ingest_stream_data")

@@ -12,12 +12,12 @@ COPY . .
 
 # Install data ingestion script dependencies
 RUN uv sync
-RUN uv pip install -e .
+# RUN uv pip install -e .
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy startup script
-COPY startup.sh /app/startup.sh
+COPY ./signal-sweep/startup.sh /app/startup.sh
 RUN chmod +x /app/startup.sh
 
 # Create the log file

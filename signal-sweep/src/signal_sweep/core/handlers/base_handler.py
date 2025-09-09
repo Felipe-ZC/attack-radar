@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List
 
-from ..models import StreamData
+from radar_core.models import StreamData
 
 
 class Handler(ABC):
-
     @abstractmethod
-    def handle(self, url: str) -> List[StreamData]:
+    def handle(self, url: str) -> list[StreamData]:
         pass

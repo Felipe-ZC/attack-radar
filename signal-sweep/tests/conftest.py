@@ -16,8 +16,8 @@ import redis.asyncio as redis
 
 import signal_sweep.main
 
-from signal_sweep.core.signal_stream import SignalStream
-from signal_sweep.core.models import StreamData
+from radar_core.signal_stream import SignalStream
+from radar_core.models import StreamData
 from signal_sweep.core.models import Source
 from signal_sweep.shared.constants import SourceType
 from signal_sweep.shared.utils import AsyncProcessPoolExecutor
@@ -139,16 +139,6 @@ def mock_file_open() -> Generator[MagicMock, None, None]:
         yield mock_file
 
 
-@pytest.fixture
-def sample_stream_data() -> List[StreamData]:
-    """Sample StreamData objects for testing."""
-    return [
-        StreamData(
-            ip="192.168.1.1", source_url="https://example.com/test.txt"
-        ),
-        StreamData(ip="10.0.0.1", source_url="https://example.com/test.txt"),
-        StreamData(ip="172.16.0.1", source_url="https://example.com/test.txt"),
-    ]
 
 
 @pytest.fixture
@@ -220,19 +210,6 @@ def mock_container(
 def mock_config_file_path() -> Path:
     """Mock config file path for testing."""
     return Path("/fake/path/to/data_sources.yml")
-
-
-@pytest.fixture(autouse=True)
-def mock_argparse() -> Generator[MagicMock, None, None]:
-    """Auto-use fixture to mock command line argument parsing."""
-    mock_args = MagicMock()
-    mock_args.config = "/fake/path/to/data_sources.yml"
-
-    with patch("signal_sweep.main.argparse.ArgumentParser") as mock_parser:
-        mock_parser_instance = MagicMock()
-        mock_parser_instance.parse_args.return_value = mock_args
-        mock_parser.return_value = mock_parser_instance
-        yield mock_args
 
 
 # Test utilities

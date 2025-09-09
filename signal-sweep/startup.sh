@@ -4,7 +4,7 @@
 cat > /etc/cron.d/signal_sweep << EOF
 REDIS_HOST=${REDIS_HOST}
 REDIS_PORT=${REDIS_PORT}
-${SWEEP_SCHEDULE} cd /app && /app/.venv/bin/python -m src.signal_sweep.main --config ./data_sources.yml >> /var/log/cron.log 2>&1
+${SWEEP_SCHEDULE} cd /app && /app/.venv/bin/python -m signal_sweep.main --config ./signal-sweep/data_sources.yml >> /var/log/cron.log 2>&1
 EOF
 
 # Set proper permissions

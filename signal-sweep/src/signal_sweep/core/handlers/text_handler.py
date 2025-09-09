@@ -3,16 +3,16 @@ The default handler for txt files.
 This handler tries to find strings that look like IPV4 addresses in a txt file.
 """
 
-from concurrent.futures import ProcessPoolExecutor
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
 import re
 
 import httpx
+from radar_core.models import StreamData
 
-from .base_handler import Handler
-from ..models import StreamData
-from ..models import Source
 from ...shared.constants import IP_V4_REGEX
+from ..models import Source
+from .base_handler import Handler
 
 
 class TextHandler(Handler):
