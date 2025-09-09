@@ -46,8 +46,8 @@ def setup_logger(
         logger.addHandler(console_handler)
 
         # For logging to a file
-        log_dir = os.getenv("LOG_DIR", "logs")
-        log_file_path = os.path.join(log_dir, f"{name}.log")
+        log_dir: str = os.getenv("LOG_DIR", "logs")
+        log_file_path: str = os.path.join(log_dir, f"{name}.log")
 
         # Create the log directory if it doesn't exist
         if not os.path.exists(log_dir):

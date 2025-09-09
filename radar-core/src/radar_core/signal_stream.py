@@ -30,17 +30,18 @@ class SignalStream:
     async def write_stream_data(self, stream_data: StreamData) -> str:
         try:
             print(f"in write_stream_data, stream_data is {stream_data}")
-            data = asdict(stream_data)
-            hash_id = get_dict_str_hash(data)
+            data: dict[str, str] = asdict(stream_data)
+            hash_id: str = get_dict_str_hash(data)
             if not await self.redis_client.sismember(
                 DEFAULT_SET_NAME, hash_id
             ):
                 self.logger.info("Writing new entry to stream %s", stream_data)
                 await self.redis_client.sadd(DEFAULT_SET_NAME, hash_id)
-                message_id = await self.redis_client.xadd(
+                message_id: str = await self.redis_client.xadd(
                     DEFAULT_STREAM_NAME, data
                 )
-                return str(message_id)
+                return message_id
+        # TODO: Check what error sismember, sadd and xadd raise and catch them here...
         except Exception as e:
             self.logger.error(
                 "Error while trying to write new message to signal-stream, error is %s",

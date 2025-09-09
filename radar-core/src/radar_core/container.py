@@ -36,7 +36,7 @@ class CoreContainer(containers.DeclarativeContainer):
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
 
 
-def configure_container_from_env(container: CoreContainer):
+def configure_container_from_env(container: CoreContainer) -> None:
     container.config.log_level.from_env("LOG_LEVEL")
     container.config.redis_host.from_env("REDIS_HOST")
     container.config.redis_port.from_env("REDIS_PORT")
