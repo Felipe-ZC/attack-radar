@@ -16,13 +16,13 @@ LOG_LEVEL_MAP: dict[str, int] = {
 
 def get_log_level_from_env() -> int:
     """Get log level from environment variable or use default"""
-    log_level_str: str = os.getenv("LOG_LEVEL", "INFO").upper()
-    return LOG_LEVEL_MAP.get(log_level_str, logging.INFO)
+    return os.getenv("LOG_LEVEL", "INFO").upper()
 
 
 def setup_logger(
     name: str = "attack-radar", log_level_str: str = DEFAULT_LOG_LEVEL
 ) -> logging.Logger:
+    print(name)
     print(f"log_level_str is {log_level_str}")
     """Setup app wide logging utiltity"""
     logger: logging.Logger = logging.getLogger(name)

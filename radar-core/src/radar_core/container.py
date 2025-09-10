@@ -31,6 +31,8 @@ class CoreContainer(containers.DeclarativeContainer):
         port=config.redis_port,
         db=config.redis_db,
         decode_responses=True,
+        socket_keepalive=True,
+        socket_keepalive_options={}
     )
 
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)

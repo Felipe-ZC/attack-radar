@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["radar-core", "signal-sweep"]
+members = ["radar-core", "signal-sweep", "signal-forge"]
 
 [build-system]
 requires = ["hatchling"]

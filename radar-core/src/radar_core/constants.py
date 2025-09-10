@@ -1,5 +1,5 @@
-# DEFAULT_STREAM_NAME = "signal-stream"
-DEFAULT_STREAM_NAME = "localhost"
+DEFAULT_STREAM_NAME = "signal-stream"
+# DEFAULT_STREAM_NAME = "localhost"
 DEFAULT_SET_NAME = "signal-stream-set"
 DEFAULT_REDIS_PORT = "6379"
 DEFAULT_REDIS_DB = 1

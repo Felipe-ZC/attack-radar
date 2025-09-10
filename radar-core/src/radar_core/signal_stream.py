@@ -60,5 +60,41 @@ class SignalStream:
             log_error(self.logger, "Redis timeout error", str(timeout_err))
         except Exception as unhandled_err:
             log_error(self.logger, "Unhandled error", str(unhandled_err))
-            raise unhandled_err
+            raise
         return ""
+
+    async def create_group(self, group_name: str) -> None:
+        try:
+            self.redis_client.xgroup_create(
+                DEFAULT_STREAM_NAME,
+                group_name,
+                id="0"
+            )
+        except redis.exceptions.ResponseError as response_error:
+            if "BUSYGROUP" in str(response_error):
+                self.logger.warning("Consumer group %s already exists!")
+            else:
+                raise response_error
+
+    async def read_group_messages(
+        self,
+        consumer_name: str,
+        group_name: str,
+        batch_size: int = 10,
+        block_timeout: int = 1000
+    ) -> None:
+        try:
+            return await (
+                self.redis_client.xreadgroup(
+                    DEFAULT_STREAM_NAME,
+                    consumer_name,
+                    {DEFAULT_STREAM_NAME: '>'},  # '>' means undelivered messages
+                    count=batch_size,
+                    block=block_timeout
+                )
+            )
+        except redis.exceptions.ResponseError as response_error:
+            if "BUSYGROUP" in str(response_error):
+                self.logger.warning("Consumer group %s already exists!")
+            else:
+                raise response_error
