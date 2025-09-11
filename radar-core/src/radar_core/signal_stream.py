@@ -65,7 +65,8 @@ class SignalStream:
 
     async def create_group(self, group_name: str) -> None:
         try:
-            self.redis_client.xgroup_create(
+            print(DEFAULT_STREAM_NAME, group_name)
+            await self.redis_client.xgroup_create(
                 DEFAULT_STREAM_NAME,
                 group_name,
                 id="0"
@@ -86,7 +87,7 @@ class SignalStream:
         try:
             return await (
                 self.redis_client.xreadgroup(
-                    DEFAULT_STREAM_NAME,
+                    group_name,
                     consumer_name,
                     {DEFAULT_STREAM_NAME: '>'},  # '>' means undelivered messages
                     count=batch_size,
