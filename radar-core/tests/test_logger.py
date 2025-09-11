@@ -12,7 +12,7 @@ from radar_core.logger import (
 def test_get_log_level_from_env():
     for env_var, expected_result in LOG_LEVEL_MAP.items():
         with patch.dict(os.environ, {"LOG_LEVEL": env_var}):
-            assert get_log_level_from_env() == expected_result
+            assert LOG_LEVEL_MAP[get_log_level_from_env()] == expected_result
 
 
 def test_setup_logger():

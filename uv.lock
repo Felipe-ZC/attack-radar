@@ -346,11 +346,15 @@ name = "radar-core"
 version = "0.1.0"
 source = { editable = "radar-core" }
 dependencies = [
+    { name = "httpx" },
     { name = "redis" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "redis", specifier = ">=6.4.0" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "redis", specifier = ">=6.4.0" },
+]
 
 [[package]]
 name = "redis"

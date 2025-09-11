@@ -1,6 +1,7 @@
 import os
 from unittest.mock import patch
 
+import httpx
 from radar_core.constants import (
     DEFAULT_LOG_LEVEL,
     DEFAULT_REDIS_DB,
@@ -50,6 +51,9 @@ async def test_container_creation_with_default_values():
     assert isinstance(signal_stream, SignalStream)
     assert signal_stream.redis_client is redis_client
 
+    http_client = await container.http_client()
+    assert isinstance(http_client, httpx.AsyncClient)
+
 
 async def test_container_creation_with_env_vars():
     with patch.dict(os.environ, MOCK_ENV):
@@ -82,6 +86,9 @@ async def test_container_creation_with_env_vars():
         signal_stream = await container.signal_stream()
         assert isinstance(signal_stream, SignalStream)
         assert signal_stream.redis_client is redis_client
+
+        http_client = await container.http_client()
+        assert isinstance(http_client, httpx.AsyncClient)
 
 
 def test_configure_container_from_env():

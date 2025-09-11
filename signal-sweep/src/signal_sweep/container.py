@@ -1,5 +1,6 @@
 from dependency_injector import providers
-import httpx
+
+# import httpx
 from radar_core import CoreContainer
 
 from .core.handlers.text_handler import TextHandler
@@ -8,12 +9,14 @@ from .shared.utils import AsyncProcessPoolExecutor
 
 
 class ApplicationContainer(CoreContainer):
-    http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
+    # http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
     process_executor = providers.Resource(
         AsyncProcessPoolExecutor, max_workers=DEFAULT_BATCH_SIZE
     )
     text_handler = providers.Factory(
-        TextHandler, http_client=http_client, process_executor=process_executor
+        TextHandler,
+        http_client=CoreContainer.http_client,
+        process_executor=process_executor,
     )
     handler_mapping = providers.Dict({SourceType.TXT: text_handler})
 

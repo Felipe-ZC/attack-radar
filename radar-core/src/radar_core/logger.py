@@ -22,16 +22,12 @@ def get_log_level_from_env() -> int:
 def setup_logger(
     name: str = "attack-radar", log_level_str: str = DEFAULT_LOG_LEVEL
 ) -> logging.Logger:
-    print(name)
-    print(f"log_level_str is {log_level_str}")
     """Setup app wide logging utiltity"""
     logger: logging.Logger = logging.getLogger(name)
 
     # If the logger has not been setup yet...
     if not logger.handlers:
-        print(log_level_str)
         log_level = LOG_LEVEL_MAP.get(log_level_str)
-        print(f"log_level is: {log_level}")
         logger.setLevel(log_level)
 
         formatter: logging.Formatter = logging.Formatter(

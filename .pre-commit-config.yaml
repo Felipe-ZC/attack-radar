@@ -1,4 +1,11 @@
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6  # Use the ref you want to point at
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+        
   - repo: local
     hooks:
       - id: pytest
@@ -6,18 +13,5 @@ repos:
         entry: uv run pytest
         language: system
         types: [python]
-        pass_filenames: true
-        
-      - id: ruff-check
-        name: ruff check
-        entry: uv run ruff check --fix
-        language: system
-        types: [python]
-        pass_filenames: true
-        
-      - id: ruff-format
-        name: ruff format
-        entry: uv run ruff format
-        language: system
-        types: [python]
-        pass_filenames: true
+        files: ^.*test.*\.py$|^tests/.*\.py$
+        pass_filenames: true 

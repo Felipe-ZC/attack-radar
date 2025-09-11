@@ -1,4 +1,5 @@
 from dependency_injector import containers, providers
+import httpx
 import redis.asyncio as redis
 
 from .constants import (
@@ -19,12 +20,6 @@ class CoreContainer(containers.DeclarativeContainer):
     config.redis_port.from_value(DEFAULT_REDIS_PORT)
     config.redis_db.from_value(DEFAULT_REDIS_DB)
 
-    logger = providers.Factory(
-        setup_logger,
-        name=config.service_name,
-        log_level_str=config.log_level,
-    )
-
     redis_client = providers.Resource(
         redis.Redis,
         host=config.redis_host,
@@ -32,10 +27,19 @@ class CoreContainer(containers.DeclarativeContainer):
         db=config.redis_db,
         decode_responses=True,
         socket_keepalive=True,
-        socket_keepalive_options={}
+        socket_keepalive_options={},
     )
 
+    http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
+
+    # NOTE: Should we pass in the default logger to signal_stream?
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
+
+    logger = providers.Factory(
+        setup_logger,
+        name=config.service_name,
+        log_level_str=config.log_level,
+    )
 
 
 def configure_container_from_env(container: CoreContainer) -> None:
