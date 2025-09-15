@@ -2,6 +2,7 @@ from logging import Logger
 
 from radar_core import SignalStream
 
+from .core.models import AbuseIPDBReport, HostMetadata
 from .ipdb import AbuseIPDB
 
 DEFAULT_GROUP_NAME = "signal-forge"
@@ -34,8 +35,8 @@ class SignalProcessor:
                         response = await self.abuse_ipdb.check(
                             message_data["ip"]
                         )
-                        optimized_data = self.optimize_data(response)
-                        print(optimized_data, response)
+                        optimized_data = self.format_data(response)
+                        print(optimized_data)
 
                 if not messages:
                     self.logger.warning("No messages...")
@@ -46,19 +47,23 @@ class SignalProcessor:
                 self.logger.error(e)
                 raise
 
-    async def optimize_data(response: dict) -> dict:
+    def format_data(
+        self, response: dict
+    ) -> tuple[HostMetadata, list[AbuseIPDBReport]]:
         """
         TODO: Create a dataclass for the optimized data..
         We need to grab the following fields from response
         and perform a transformation on the reports field
 
         1) ipAddress
-        2) *address
         2) countryCode
         3) countryName
-        4) report timestamp
-        5) report comments
-        6) report category
+        4) usageType
+        5) domain
+        6) isp
+        7) report timestamp
+        8) report comments
+        9) report category
 
         * We'll need to use some external data source to get the physical address using the IP.
         * For now let's just use these fields and add more later.
@@ -77,4 +82,13 @@ class SignalProcessor:
             }
         }
         """
-        pass
+        # report_keys = {key: value for key, value in enumerate(response["data"]) if key in ["ipAddress"]}
+        data = response["data"]
+        return HostMetadata(
+            ip_address=data["ipAddress"],
+            country_code=data["countryCode"],
+            country_name=data["countryName"],
+            usage_type=data["usageType"],
+            domain=data["domain"],
+            isp=data["isp"],
+        )
