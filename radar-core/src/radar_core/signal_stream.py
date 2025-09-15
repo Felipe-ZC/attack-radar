@@ -36,6 +36,7 @@ class SignalStream:
         ),
     ):
         self.redis_client = redis_client
+        print(redis_client)
         self.logger = logger
 
     async def write_stream_data(self, stream_data: StreamData) -> str:
@@ -50,7 +51,15 @@ class SignalStream:
                 message_id: str = await self.redis_client.xadd(
                     DEFAULT_STREAM_NAME, data
                 )
+                print(message_id)
                 return message_id
+            else:
+                print("is member")
+                print(
+                    await self.redis_client.sismember(
+                        DEFAULT_SET_NAME, hash_id
+                    )
+                )
         # TODO: Add re-try logic for the two redis exceptions...
         except redis.exceptions.ConnectionError as connection_err:
             log_error(
@@ -67,9 +76,7 @@ class SignalStream:
         try:
             print(DEFAULT_STREAM_NAME, group_name)
             await self.redis_client.xgroup_create(
-                DEFAULT_STREAM_NAME,
-                group_name,
-                id="0"
+                DEFAULT_STREAM_NAME, group_name, id="0"
             )
         except redis.exceptions.ResponseError as response_error:
             if "BUSYGROUP" in str(response_error):
@@ -82,17 +89,15 @@ class SignalStream:
         consumer_name: str,
         group_name: str,
         batch_size: int = 10,
-        block_timeout: int = 1000
+        block_timeout: int = 1000,
     ) -> None:
         try:
-            return await (
-                self.redis_client.xreadgroup(
-                    group_name,
-                    consumer_name,
-                    {DEFAULT_STREAM_NAME: '>'},  # '>' means undelivered messages
-                    count=batch_size,
-                    block=block_timeout
-                )
+            return await self.redis_client.xreadgroup(
+                group_name,
+                consumer_name,
+                {DEFAULT_STREAM_NAME: ">"},  # '>' means undelivered messages
+                count=batch_size,
+                block=block_timeout,
             )
         except redis.exceptions.ResponseError as response_error:
             if "BUSYGROUP" in str(response_error):

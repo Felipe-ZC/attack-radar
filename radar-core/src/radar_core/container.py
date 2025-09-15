@@ -3,6 +3,7 @@ import httpx
 import redis.asyncio as redis
 
 from .constants import (
+    DEFAULT_HEADERS,
     DEFAULT_LOG_LEVEL,
     DEFAULT_REDIS_DB,
     DEFAULT_REDIS_HOST,
@@ -19,6 +20,7 @@ class CoreContainer(containers.DeclarativeContainer):
     config.redis_host.from_value(DEFAULT_REDIS_HOST)
     config.redis_port.from_value(DEFAULT_REDIS_PORT)
     config.redis_db.from_value(DEFAULT_REDIS_DB)
+    config.headers.from_value(DEFAULT_HEADERS)
 
     redis_client = providers.Resource(
         redis.Redis,
@@ -30,7 +32,9 @@ class CoreContainer(containers.DeclarativeContainer):
         socket_keepalive_options={},
     )
 
-    http_client = providers.Resource(httpx.AsyncClient, timeout=30.0)
+    http_client = providers.Resource(
+        httpx.AsyncClient, timeout=30.0, headers=config.headers
+    )
 
     # NOTE: Should we pass in the default logger to signal_stream?
     signal_stream = providers.Factory(SignalStream, redis_client=redis_client)
