@@ -16,6 +16,7 @@ class HostMetadata:
 
 @dataclass
 class AbuseIPDBReport:
+    ip_address: str
     report_timestamp: datetime
     report_comment: str
     report_categories: list[int]

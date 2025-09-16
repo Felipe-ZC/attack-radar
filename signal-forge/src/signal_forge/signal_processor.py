@@ -35,8 +35,10 @@ class SignalProcessor:
                         response = await self.abuse_ipdb.check(
                             message_data["ip"]
                         )
-                        optimized_data = self.format_data(response)
-                        print(optimized_data)
+                        host_metadata, reports_list = self.format_data(
+                            response
+                        )
+                        print(host_metadata, reports_list)
 
                 if not messages:
                     self.logger.warning("No messages...")
@@ -82,9 +84,8 @@ class SignalProcessor:
             }
         }
         """
-        # report_keys = {key: value for key, value in enumerate(response["data"]) if key in ["ipAddress"]}
         data = response["data"]
-        return HostMetadata(
+        host_metadata = HostMetadata(
             ip_address=data["ipAddress"],
             country_code=data["countryCode"],
             country_name=data["countryName"],
@@ -92,3 +93,13 @@ class SignalProcessor:
             domain=data["domain"],
             isp=data["isp"],
         )
+        abuse_reports = [
+            AbuseIPDBReport(
+                ip_address=data["ipAddress"],
+                report_timestamp=report["reportedAt"],
+                report_comment=report["comment"],
+                report_categories=report["categories"],
+            )
+            for report in data["reports"]
+        ]
+        return host_metadata, abuse_reports

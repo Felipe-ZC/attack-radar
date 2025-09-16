@@ -13,6 +13,7 @@ from .shared.constants import DEFAULT_BATCH_SIZE, SourceType
 from .shared.utils import async_batch_process_list
 
 
+# NOTE: Are we creating the signal_stream classes muliple times here?
 @inject
 async def handle_data_source(
     source: Source,
@@ -27,6 +28,7 @@ async def handle_data_source(
     return await handler.handle(source)
 
 
+# NOTE: Are we creating the signal_stream classes muliple times here?
 @inject
 async def ingest_stream_data(
     stream_data: StreamData,
