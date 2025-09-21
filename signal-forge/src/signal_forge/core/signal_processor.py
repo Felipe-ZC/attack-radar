@@ -4,15 +4,15 @@ from logging import Logger
 import pandas as pd
 from radar_core import AsyncDuckDb, SignalStream
 
-from .core.models import AbuseIPDBReport, HostMetadata
-from .ipdb import AbuseIPDB
-from .shared.constants import (
+from ..shared.constants import (
     CREATE_ABUSE_REPORTS_TABLE_IP_INDEX,
     CREATE_ABUSE_REPORTS_TABLE_QUERY,
     CREATE_HOST_META_TABLE_QUERY,
     HOST_META_TABLE_NAME,
     REPORTS_TABLE_NAME,
 )
+from .ipdb import AbuseIPDB
+from .models import AbuseIPDBReport, HostMetadata
 
 DEFAULT_GROUP_NAME = "signal-forge"
 DEFAULT_CONSUMER_NAME = "signal-processor"
@@ -37,35 +37,33 @@ class SignalProcessor:
         # Create duckdb tables if they do not exist...
         await self.create_tables()
         # Start processing messages
-        while True:
-            try:
-                messages = await self.signal_stream.read_group_messages(
-                    DEFAULT_CONSUMER_NAME, DEFAULT_GROUP_NAME
-                )
+        # while True:
+        try:
+            messages = await self.signal_stream.read_group_messages(
+                DEFAULT_CONSUMER_NAME, DEFAULT_GROUP_NAME
+            )
 
-                if not messages:
-                    self.logger.warning("No messages...")
-                    continue
+            if not messages:
+                self.logger.warning("No messages...")
+                return
 
-                host_list, reports_list = [], []
-                for _, stream_msgs in messages:
-                    for _, message_data in stream_msgs:
-                        print("message_data is: ", message_data)
-                        response = await self.abuse_ipdb.check(
-                            message_data["ip"]
-                        )
-                        host_metadata, host_abuse_reports = self.format_data(
-                            response
-                        )
-                        host_list.append(host_metadata)
-                        reports_list.extend(host_abuse_reports)
-                        # Write batch...
-                        self.logger.info("Writing data lists to duckdb...")
-                        await self.write_data_lists(host_list, reports_list)
+            host_list, reports_list = [], []
+            for _, stream_msgs in messages:
+                for _, message_data in stream_msgs:
+                    print("message_data is: ", message_data)
+                    response = await self.abuse_ipdb.check(message_data["ip"])
+                    host_metadata, host_abuse_reports = self.format_data(
+                        response
+                    )
+                    host_list.append(host_metadata)
+                    reports_list.extend(host_abuse_reports)
+                    # Write batch...
+                    self.logger.info("Writing data lists to duckdb...")
+                    await self.write_data_lists(host_list, reports_list)
 
-            except Exception as e:
-                self.logger.error(e)
-                raise
+        except Exception as e:
+            self.logger.error(e)
+            raise
 
     async def create_tables(self):
         create_host_meta_result = await self.duck_db.execute_query(

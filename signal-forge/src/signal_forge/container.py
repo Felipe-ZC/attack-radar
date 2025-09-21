@@ -1,7 +1,7 @@
 from dependency_injector import providers
 from radar_core import AsyncDuckDb, AsyncThreadPoolExecutor, CoreContainer
 
-from .ipdb import AbuseIPDB
+from .core.ipdb import AbuseIPDB
 
 DEFAULT_MAX_WORKERS = 5
 

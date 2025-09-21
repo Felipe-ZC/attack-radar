@@ -15,5 +15,8 @@ dependencies = [
     "pandas>=2.3.2",
 ]
 
+[project.scripts]
+signal-forge = "signal_forge.main:main"
+
 [tool.uv.sources]
 radar-core = { workspace = true }
