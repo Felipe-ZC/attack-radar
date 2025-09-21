@@ -16,7 +16,7 @@ class AsyncDuckDb:
 
     async def __aenter__(self):
         self.conn = await self.async_exectuor.submit(
-            duckdb.connect, self.database_path
+            duckdb.connect, self.db_path
         )
         return self
 
@@ -24,12 +24,22 @@ class AsyncDuckDb:
         if hasattr(self, "conn") and self.conn:
             await self.async_exectuor.submit(self.conn.close)
 
-    async def execute_query(self, query: str, params: tuple[any] = ()):
-        args = (
-            query,
-            params if params else query,
+    async def register_dataframe(self, name: str, dataframe: pd.DataFrame):
+        return await self.async_exectuor.submit(
+            self.conn.register, name, dataframe
         )
-        return await self.async_exectuor.submit(self.conn.execute, args)
 
-    async def load_from_dataframe(self, dataframe: pd.DataFrame):
-        pass
+    async def execute_query(self, query: str, params: list[any] = ()):
+        args = (query, params) if params else (query,)
+        return await self.async_exectuor.submit(self.conn.execute, *args)
+
+    async def bulk_insert_from_dataframe(
+        self,
+        table_name: str,
+        df_name: str,
+        df: pd.DataFrame,
+        has_primary_key: bool = False,
+    ):
+        await self.async_exectuor.submit(self.conn.register, df_name, df)
+        query = f"INSERT {"OR IGNORE" if has_primary_key else ""} INTO {table_name} SELECT * FROM {df_name}"
+        return await self.execute_query(query)

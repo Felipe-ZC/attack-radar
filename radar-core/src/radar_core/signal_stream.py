@@ -88,7 +88,7 @@ class SignalStream:
         self,
         consumer_name: str,
         group_name: str,
-        batch_size: int = 10,
+        batch_size: int = 50,
         block_timeout: int = 1000,
     ) -> None:
         try:
