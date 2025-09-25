@@ -1,4 +1,4 @@
-from pathlib import Path
+import os
 
 import duckdb
 import pandas as pd
@@ -8,9 +8,9 @@ from .utils import AsyncThreadPoolExecutor
 
 class AsyncDuckDb:
     def __init__(
-        self, db_path: Path, thread_pool_exectuor: AsyncThreadPoolExecutor
+        self, db_path: str, thread_pool_exectuor: AsyncThreadPoolExecutor
     ):
-        self.db_path = db_path.resolve()
+        self.db_path = os.path.normpath(db_path)
         self.async_exectuor = thread_pool_exectuor
         self.conn = None
 
@@ -18,6 +18,7 @@ class AsyncDuckDb:
         self.conn = await self.async_exectuor.submit(
             duckdb.connect, self.db_path
         )
+        print(self)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -41,5 +42,8 @@ class AsyncDuckDb:
         has_primary_key: bool = False,
     ):
         await self.async_exectuor.submit(self.conn.register, df_name, df)
-        query = f"INSERT {"OR IGNORE" if has_primary_key else ""} INTO {table_name} SELECT * FROM {df_name}"
+        query = (
+            f"INSERT {'OR IGNORE' if has_primary_key else ''} "
+            f"INTO {table_name} SELECT * FROM {df_name}"
+        )
         return await self.execute_query(query)
