@@ -1,8 +1,9 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from radar_core.models import StreamData
 import redis.asyncio as redis
+
+from radar_core.models import StreamData
 
 
 @pytest.fixture

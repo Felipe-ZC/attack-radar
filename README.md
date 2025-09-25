@@ -1,5 +1,8 @@
 # attack-radar
 
+## Disclaimer
+This project was just for fun, it was a way for me to mess around with uv, different python libraries and software architecture patterns. This whole data pipeline could easily be ONE (maybe two) python file(s), but for the sake of learning I over-engineered the shit out of it. I will say though, it was pretty fun to do! 
+
 ## Overview
 attack-radar is a web application whose end goal is to visualize the geographical location of the origin of possible cyberattacks across the globe.
 

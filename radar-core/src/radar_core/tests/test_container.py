@@ -2,6 +2,8 @@ import os
 from unittest.mock import patch
 
 import httpx
+import redis.asyncio as redis
+
 from radar_core.constants import (
     DEFAULT_LOG_LEVEL,
     DEFAULT_REDIS_DB,
@@ -11,7 +13,6 @@ from radar_core.constants import (
 from radar_core.container import CoreContainer, configure_container_from_env
 from radar_core.logger import LOG_LEVEL_MAP
 from radar_core.signal_stream import SignalStream
-import redis.asyncio as redis
 
 MOCK_ENV = {
     "LOG_LEVEL": "INFO",
