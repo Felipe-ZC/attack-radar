@@ -1,34 +1,35 @@
-version: '3.8'
-
 services:
-  signal-stream:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes # Enables persistent data
-    networks:
-      - app_network
-
-  signal-sweep:
-    build: 
-      context: .
-      dockerfile: ./signal-sweep/Dockerfile
-    depends_on:
-      - signal-stream
+  db:
+    image: postgres:18
     environment:
-      - SWEEP_SCHEDULE=* * * * *
-      - REDIS_HOST=signal-stream
-      - REDIS_PORT=6379
-    networks:
-      - app_network
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
     volumes:
-      - ./data:/app/data 
+      - pgdata:/var/lib/postgresql
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL} 
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: ${PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION:-true} 
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
 
 volumes:
   redis_data:
+  pgdata:
+  pgadmin-data:
 
-networks:
-  app_network:
-    driver: bridge
