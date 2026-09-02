@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import sys
 
 import asyncpg
 import db
@@ -12,6 +13,7 @@ import yaml
 IPDB_API_KEY = os.getenv("IPDB_API_KEY")
 IP_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
 DEFAULT_DATA_SOURCES_PATH = "./data/data_sources.yaml"
+IP_GEOLOCATION_API_BASE_URL = "https://ipwho.is"
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,20 @@ async def fetch_ips_from_url(url: str) -> list[str]:
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
         return list(set(re.findall(IP_REGEX, response.text)))
+
+
+async def geolocate(ip: str) -> tuple[float, float] | None:
+    logger.info("Geoloacting IP %s", ip)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{IP_GEOLOCATION_API_BASE_URL}/{ip}")
+        data = response.json()
+        if data.get("success"):
+            return data.get("latitude"), data.get("longitude")
+        else:
+            logger.error(
+                "Failed to geolocate IP %s: %s", ip, data.get("message")
+            )
+            return None
 
 
 async def ingest_sources(sources: list[dict], pool: asyncpg.Pool):
@@ -45,7 +61,7 @@ async def check_ip_abuse(ip: str, http_client: httpx.AsyncClient):
         logger.error(
             "Error while fetching abuse reports for host with IP %s", ip
         )
-        return None
+        return {}
 
 
 async def process_signal(ip_addr: str, source: str, pool: asyncpg.Pool):
@@ -72,9 +88,8 @@ async def main(config_file: str = ""):
 
 
 if __name__ == "__main__":
-    import sys
-
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(
-        main(sys.argv[2] if len(sys.argv) > 2 else DEFAULT_DATA_SOURCES_PATH)
-    )
+    asyncio.run(geolocate("102.220.160.172"))
+    # asyncio.run(
+    #     main(sys.argv[2] if len(sys.argv) > 2 else DEFAULT_DATA_SOURCES_PATH)
+    # )
