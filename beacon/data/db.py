@@ -16,6 +16,8 @@ class HostMetadata:
     usage_type: str | None
     domain: str | None
     isp: str | None
+    lat: float | None = None
+    lon: float | None = None
 
 
 @dataclass
@@ -28,6 +30,7 @@ class AbuseReport:
 
 def parse_abuse_response(
     payload: dict,
+    geolocation: tuple[float, float] | None = None,
 ) -> tuple[HostMetadata | None, list[AbuseReport]]:
     data = payload.get("data")
     if not data:
@@ -35,6 +38,7 @@ def parse_abuse_response(
         return None, []
 
     ip_address = data["ipAddress"]
+    lat, lon = geolocation if geolocation else (None, None)
 
     metadata = HostMetadata(
         ip_address=ip_address,
@@ -43,6 +47,8 @@ def parse_abuse_response(
         usage_type=data.get("usageType"),
         domain=data.get("domain"),
         isp=data.get("isp"),
+        lat=lat,
+        lon=lon,
     )
 
     reports = [
@@ -64,6 +70,8 @@ async def create_pool() -> asyncpg.Pool:
     database = os.getenv("POSTGRES_DB")
 
     logger.info("Creating connection pool to %s:%s/%s", host, port, database)
+    print("user:", os.getenv("POSTGRES_USER"))
+    print("password:", os.getenv("POSTGRES_PASSWORD"))
     pool = await asyncpg.create_pool(
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
@@ -82,14 +90,16 @@ async def upsert_host_metadata(
     await pool.execute(
         """
         INSERT INTO host_metadata
-            (ip_address, country_code, country_name, usage_type, domain, isp)
-        VALUES ($1, $2, $3, $4, $5, $6)
+            (ip_address, country_code, country_name, usage_type, domain, isp, lat, lon)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (ip_address) DO UPDATE SET
             country_code = EXCLUDED.country_code,
             country_name = EXCLUDED.country_name,
             usage_type = EXCLUDED.usage_type,
             domain = EXCLUDED.domain,
-            isp = EXCLUDED.isp
+            isp = EXCLUDED.isp,
+            lat = EXCLUDED.lat,
+            lon = EXCLUDED.lon
         """,
         metadata.ip_address,
         metadata.country_code,
@@ -97,6 +107,8 @@ async def upsert_host_metadata(
         metadata.usage_type,
         metadata.domain,
         metadata.isp,
+        metadata.lat,
+        metadata.lon,
     )
 
 
@@ -125,8 +137,12 @@ async def insert_abuse_reports(
     )
 
 
-async def write_signal_data(pool: asyncpg.Pool, payload: dict) -> None:
-    metadata, reports = parse_abuse_response(payload)
+async def write_signal_data(
+    pool: asyncpg.Pool,
+    payload: dict,
+    geolocation: tuple[float, float] | None = None,
+) -> None:
+    metadata, reports = parse_abuse_response(payload, geolocation)
     if metadata is None:
         return
 
