@@ -152,3 +152,6 @@ Desktop.ini
 
 logs/
 data_sources.yaml
+
+# GeoIP databases
+*.mmdb
