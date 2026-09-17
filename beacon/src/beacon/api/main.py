@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI, Request, status
 
 from beacon.data.db import DBClient
+from beacon.data.models import HostMetadata
 from beacon.shared.config import settings
 
 
@@ -19,6 +20,17 @@ async def lifespan(app: FastAPI):
     app.state.db = postgres
     yield
     await postgres.disconnect()
+
+
+async def get_paginated_host_metadata(
+    request: Request, page: int = 1, page_size: int = 10
+) -> list[HostMetadata]:
+    db_client: DBClient = request.app.state.db
+    offset = (page - 1) * page_size
+    metadata_list = await db_client.get_paginated_host_metadata(
+        offset=offset, limit=page_size
+    )
+    return metadata_list
 
 
 app = FastAPI(lifespan=lifespan)

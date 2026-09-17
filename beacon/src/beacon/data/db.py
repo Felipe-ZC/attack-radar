@@ -36,7 +36,10 @@ class DBClient:
 
     async def connect(self) -> None:
         self._logger.info(
-            "Creating connection pool to %s:%s/%s", self.host, self.port, self.database
+            "Creating connection pool to %s:%s/%s",
+            self.host,
+            self.port,
+            self.database,
         )
         self.pool = await asyncpg.create_pool(
             user=self.user,
@@ -46,7 +49,10 @@ class DBClient:
             port=self.port,
         )
         self._logger.info(
-            "Connection pool to %s:%s/%s created", self.host, self.port, self.database
+            "Connection pool to %s:%s/%s created",
+            self.host,
+            self.port,
+            self.database,
         )
 
     async def disconnect(self) -> None:
@@ -110,6 +116,26 @@ class DBClient:
                 for report in reports
             ],
         )
+
+    async def get_paginated_host_metadata(
+        self, offset: int, limit: int
+    ) -> list[HostMetadata]:
+        if not self.pool:
+            self._logger.error("Database pool is not initialized.")
+            raise RuntimeError("Database pool is not initialized.")
+
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT ip_address, country_code, country_name, usage_type, domain, isp, lat, lon
+                FROM host_metadata
+                ORDER BY ip_address
+                LIMIT $1 OFFSET $2
+                """,
+                limit,
+                offset,
+            )
+            return [HostMetadata(**row) for row in rows]
 
     async def write_signal_data(
         self, metadata: HostMetadata, reports: list[AbuseReport]
