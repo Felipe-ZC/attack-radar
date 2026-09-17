@@ -3,7 +3,6 @@ import logging
 import re
 import sys
 
-import asyncpg
 import httpx
 import yaml
 
@@ -27,12 +26,12 @@ async def fetch_ips_from_url(
     return list(set(re.findall(IP_REGEX, response.text)))
 
 
-async def ingest_sources(sources: list[dict], pool: asyncpg.Pool):
+async def ingest_sources(sources: list[dict], db_client: db.DBClient):
     async with httpx.AsyncClient(timeout=30) as http:
         for source in sources:
             ips = await fetch_ips_from_url(source["url"], http)
             for ip in ips:
-                await process_signal(ip, source["url"], pool, http)
+                await process_signal(ip, source["url"], db_client, http)
 
 
 # Data Processing
@@ -104,7 +103,7 @@ def parse_abuse_response(
 async def process_signal(
     ip_addr: str,
     source: str,
-    pool: asyncpg.Pool,
+    db_client: db.DBClient,
     http_client: httpx.AsyncClient,
 ):
     logger.info("Processing signal for %s from %s", ip_addr, source)
@@ -116,16 +115,18 @@ async def process_signal(
     if metadata is None:
         return
 
-    await db.write_signal_data(pool, metadata, reports)
+    await db_client.write_signal_data(metadata, reports)
 
 
 async def ingest(sources: list[dict]):
-    logger.info("Creating connection pool...")
-    pool = await db.create_pool()
-    try:
-        await ingest_sources(sources, pool)
-    finally:
-        await pool.close()
+    async with db.DBClient(
+        host=settings.POSTGRES_HOST,
+        port=settings.POSTGRES_PORT,
+        database=settings.POSTGRES_DB,
+        user=settings.POSTGRES_USER,
+        password=settings.POSTGRES_PASSWORD,
+    ) as db_client:
+        await ingest_sources(sources, db_client)
 
 
 def main():
