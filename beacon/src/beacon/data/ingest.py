@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import os
+from pathlib import Path
 import re
-import sys
 
 import asyncpg
+import geoip2.database
+import geoip2.errors
 import httpx
 import yaml
 
@@ -15,9 +17,12 @@ from beacon.data.models import AbuseReport, HostMetadata
 IPDB_API_KEY = os.getenv("IPDB_API_KEY")
 IP_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
 DEFAULT_DATA_SOURCES_PATH = "./data_sources.yaml"
-IP_GEOLOCATION_API_BASE_URL = "https://ipwho.is"
+GEOLITE_DB_PATH = Path(__file__).parent / "GeoLite2-City.mmdb"
 
 logger = logging.getLogger(__name__)
+
+# Expensive to construct, so build it once and reuse across lookups.
+_geoip_reader = geoip2.database.Reader(GEOLITE_DB_PATH)
 
 
 # Data Ingestion
@@ -54,22 +59,19 @@ async def check_ip_abuse(ip: str, http_client: httpx.AsyncClient):
         return {}
 
 
-async def geolocate(
-    ip: str, http_client: httpx.AsyncClient
-) -> tuple[float, float] | None:
-    logger.info("Geoloacting IP %s", ip)
-    response = await http_client.get(f"{IP_GEOLOCATION_API_BASE_URL}/{ip}")
-    data = response.json()
-    if data.get("success"):
-        return data.get("latitude"), data.get("longitude")
-    else:
-        logger.error("Failed to geolocate IP %s: %s", ip, data.get("message"))
+def geolocate(ip: str) -> tuple[float | None, float | None] | None:
+    logger.info("Geolocating IP %s", ip)
+    try:
+        result = _geoip_reader.city(ip)
+    except geoip2.errors.AddressNotFoundError:
+        logger.error("Failed to geolocate IP %s: address not found", ip)
         return None
+    return result.location.latitude, result.location.longitude
 
 
 def parse_abuse_response(
     payload: dict,
-    geolocation: tuple[float, float] | None = None,
+    geolocation: tuple[float | None, float | None] | None = None,
 ) -> tuple[HostMetadata | None, list[AbuseReport]]:
     data = payload.get("data")
     if not data:
@@ -112,7 +114,7 @@ async def process_signal(
     logger.info("Processing signal for %s from %s", ip_addr, source)
 
     abuse_data = await check_ip_abuse(ip_addr, http_client)
-    geolocation = await geolocate(ip_addr, http_client)
+    geolocation = geolocate(ip_addr)
 
     metadata, reports = parse_abuse_response(abuse_data, geolocation)
     if metadata is None:

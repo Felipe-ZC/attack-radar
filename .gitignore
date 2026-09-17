@@ -151,3 +151,6 @@ Desktop.ini
 *.temp
 
 logs/
+
+# GeoIP databases
+*.mmdb

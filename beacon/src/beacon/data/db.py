@@ -7,7 +7,7 @@ from beacon.data.models import AbuseReport, HostMetadata
 
 logger = logging.getLogger(__name__)
 
-PoolOrConnection = asyncpg.Pool | asyncpg.Connection
+DBConnection = asyncpg.Connection | asyncpg.pool.PoolConnectionProxy
 
 
 async def create_pool() -> asyncpg.Pool:
@@ -29,7 +29,7 @@ async def create_pool() -> asyncpg.Pool:
 
 
 async def upsert_host_metadata(
-    conn: PoolOrConnection, metadata: HostMetadata
+    conn: DBConnection, metadata: HostMetadata
 ) -> None:
     await conn.execute(
         """
@@ -57,7 +57,7 @@ async def upsert_host_metadata(
 
 
 async def insert_abuse_reports(
-    conn: PoolOrConnection, reports: list[AbuseReport]
+    conn: DBConnection, reports: list[AbuseReport]
 ) -> None:
     if not reports:
         return
