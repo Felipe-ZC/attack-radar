@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, IPvAnyAddress
 
 
 class HostMetadata(BaseModel):
+    id: int | None = None
     ip_address: IPvAnyAddress
     country_code: str | None = None
     country_name: str | None = None
@@ -12,6 +13,8 @@ class HostMetadata(BaseModel):
     isp: str | None = None
     lat: float | None = Field(default=None, ge=-90, le=90)
     lon: float | None = Field(default=None, ge=-180, le=180)
+    created_at: datetime | None = None
+    modified_at: datetime | None = None
 
 
 class AbuseReport(BaseModel):
@@ -19,3 +22,5 @@ class AbuseReport(BaseModel):
     report_timestamp: datetime
     report_comment: str | None = None
     report_categories: list[int] = Field(default_factory=list)
+    created_at: datetime | None = None
+    modified_at: datetime | None = None

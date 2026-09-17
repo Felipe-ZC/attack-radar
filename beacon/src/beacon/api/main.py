@@ -22,15 +22,16 @@ async def lifespan(app: FastAPI):
     await postgres.disconnect()
 
 
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/host-metadata", response_model=list[HostMetadata])
 async def get_paginated_host_metadata(
-    request: Request, page: int = 1, page_size: int = 10
+    request: Request, page: int = 1, size: int = 10
 ) -> list[HostMetadata]:
     db_client: DBClient = request.app.state.db
-    offset = (page - 1) * page_size
+    offset = (page - 1) * size
     metadata_list = await db_client.get_paginated_host_metadata(
-        offset=offset, limit=page_size
+        offset=offset, limit=size
     )
     return metadata_list
-
-
-app = FastAPI(lifespan=lifespan)

@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 ingest = "beacon.data.ingest:main"
+migrate = "beacon.data.migrate:main"
 
 [build-system]
 requires = ["hatchling"]
