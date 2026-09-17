@@ -127,9 +127,9 @@ class DBClient:
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT ip_address, country_code, country_name, usage_type, domain, isp, lat, lon
+                SELECT id, ip_address, country_code, country_name, usage_type, domain, isp, lat, lon, created_at, modified_at
                 FROM host_metadata
-                ORDER BY ip_address
+                ORDER BY id
                 LIMIT $1 OFFSET $2
                 """,
                 limit,
