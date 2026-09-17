@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 import re
 import sys
 
@@ -10,11 +9,10 @@ import yaml
 
 from beacon.data import db
 from beacon.data.models import AbuseReport, HostMetadata
+from beacon.shared.config import settings
 
 # Configuration
-IPDB_API_KEY = os.getenv("IPDB_API_KEY")
 IP_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
-DEFAULT_DATA_SOURCES_PATH = "./data_sources.yaml"
 IP_GEOLOCATION_API_BASE_URL = "https://ipwho.is"
 
 logger = logging.getLogger(__name__)
@@ -44,7 +42,7 @@ async def check_ip_abuse(ip: str, http_client: httpx.AsyncClient):
         response = await http_client.get(
             "https://api.abuseipdb.com/api/v2/check",
             params={"ipAddress": ip, "maxAgeInDays": 90, "verbose": ""},
-            headers={"key": IPDB_API_KEY or ""},
+            headers={"key": settings.IPDB_API_KEY},
         )
         return response.json()
     except httpx.ReadTimeout:
@@ -134,9 +132,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     logger.info("Loading sources...")
 
-    config_file = os.getenv("DATA_SOURCES_PATH", DEFAULT_DATA_SOURCES_PATH)
-
-    with open(config_file) as f:
+    with open(settings.DATA_SOURCES_PATH) as f:
         sources = yaml.safe_load(f)["sources"]
 
     asyncio.run(ingest(sources))

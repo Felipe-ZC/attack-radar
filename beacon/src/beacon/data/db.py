@@ -1,9 +1,9 @@
 import logging
-import os
 
 import asyncpg
 
 from beacon.data.models import AbuseReport, HostMetadata
+from beacon.shared.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,19 +11,25 @@ PoolOrConnection = asyncpg.Pool | asyncpg.Connection
 
 
 async def create_pool() -> asyncpg.Pool:
-    host = os.getenv("POSTGRES_HOST", "localhost")
-    port = int(os.getenv("POSTGRES_PORT", "5432"))
-    database = os.getenv("POSTGRES_DB")
-
-    logger.info("Creating connection pool to %s:%s/%s", host, port, database)
-    pool = await asyncpg.create_pool(
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        database=database,
-        host=host,
-        port=port,
+    logger.info(
+        "Creating connection pool to %s:%s/%s",
+        settings.POSTGRES_HOST,
+        settings.POSTGRES_PORT,
+        settings.POSTGRES_DB,
     )
-    logger.info("Connection pool to %s:%s/%s created", host, port, database)
+    pool = await asyncpg.create_pool(
+        user=settings.POSTGRES_USER,
+        password=settings.POSTGRES_PASSWORD,
+        database=settings.POSTGRES_DB,
+        host=settings.POSTGRES_HOST,
+        port=settings.POSTGRES_PORT,
+    )
+    logger.info(
+        "Connection pool to %s:%s/%s created",
+        settings.POSTGRES_HOST,
+        settings.POSTGRES_PORT,
+        settings.POSTGRES_DB,
+    )
 
     return pool
 
