@@ -13,23 +13,39 @@ from beacon.shared.config import settings
 # Configuration
 IP_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
 IP_GEOLOCATION_API_BASE_URL = "https://ipwho.is"
-
 logger = logging.getLogger(__name__)
 
 
 # Data Ingestion
+def handle_json_response(response: httpx.Response, source: dict) -> list[str]:
+    try:
+        data = response.json()
+        if source.get("json_key"):
+            data = data.get(source["json_key"], [])
+        if source.get("json_array_key"):
+            data = [item.get(source["json_array_key"]) for item in data]
+        return list(set(data))
+    except ValueError as e:
+        logger.error(
+            "Failed to parse JSON response from %s: %s", source["url"], e
+        )
+        return []
+
+
 async def fetch_ips_from_url(
-    url: str, http_client: httpx.AsyncClient
+    source: dict, http_client: httpx.AsyncClient
 ) -> list[str]:
-    logger.info("Fetching IPs from %s", url)
-    response = await http_client.get(url)
+    logger.info("Fetching IPs from %s", source["url"])
+    response = await http_client.get(source["url"], headers=source["headers"])
+    if source.get("type") == "json":
+        return handle_json_response(response, source)
     return list(set(re.findall(IP_REGEX, response.text)))
 
 
 async def ingest_sources(sources: list[dict], db_client: db.DBClient):
     async with httpx.AsyncClient(timeout=30) as http:
         for source in sources:
-            ips = await fetch_ips_from_url(source["url"], http)
+            ips = await fetch_ips_from_url(source, http)
             for ip in ips:
                 await process_signal(ip, source["url"], db_client, http)
 
