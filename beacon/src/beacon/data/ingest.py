@@ -14,8 +14,6 @@ from beacon.shared.config import settings
 
 # Configuration
 IP_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
-IP_GEOLOCATION_API_BASE_URL = "https://ipwho.is"
-DEFAULT_DATA_SOURCES_PATH = "./data_sources.yaml"
 GEOLITE_DB_PATH = Path(__file__).parent / "GeoLite2-City.mmdb"
 
 logger = logging.getLogger(__name__)
@@ -44,7 +42,9 @@ async def fetch_ips_from_url(
     source: dict, http_client: httpx.AsyncClient
 ) -> list[str]:
     logger.info("Fetching IPs from %s", source["url"])
-    response = await http_client.get(source["url"], headers=source["headers"])
+    response = await http_client.get(
+        source["url"], headers=source.get("headers", {})
+    )
     if source.get("type") == "json":
         return handle_json_response(response, source)
     return list(set(re.findall(IP_REGEX, response.text)))
