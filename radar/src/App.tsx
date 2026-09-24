@@ -14,7 +14,11 @@ function App() {
     size: getRandomSize(),
     color: getRandomColor() 
   }));
-  return (<Globe pointsData={myData} />);
+  return (
+    <div className='App'>
+      <Globe pointsData={myData} />
+    </div>
+  )
 }
 
 export default App
