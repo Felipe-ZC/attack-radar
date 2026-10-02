@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, Request, status
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from beacon.data.db import DBClient
 from beacon.data.models import HostMetadata
@@ -24,6 +25,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # your frontend's exact origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/host-metadata", response_model=list[HostMetadata])
 async def get_paginated_host_metadata(
