@@ -2,6 +2,9 @@ import Globe from 'react-globe.gl';
 import './App.css';
 import { useQuery } from '@tanstack/react-query';
 
+// Same-origin `/api` by default: proxied by Vite in dev and nginx in prod.
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const getRandomSize = () => Math.random() / 3;
 const getRandomColor = () => ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)];
 
@@ -42,7 +45,7 @@ function App() {
     queryKey: ['hostMetadata'],
     queryFn: async (): Promise<HostMetadata[]> => {
       const params = new URLSearchParams({size: '1000'});
-      const res = await fetch(`http://localhost:8000/host-metadata?${params}`);
+      const res = await fetch(`${API_URL}/host-metadata?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },

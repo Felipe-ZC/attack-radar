@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = ""
     POSTGRES_PASSWORD: str = ""
 
+    # API
+    # Only needed when the UI is served from a different origin than the API
+    # (in docker the UI proxies /api, so requests are same-origin). Set as a
+    # JSON list, e.g. CORS_ORIGINS='["https://radar.example.com"]'.
+    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
+
     # Data Ingestion
     IPDB_API_KEY: str = ""
     DATA_SOURCES_PATH: str = "./data_sources.yaml"

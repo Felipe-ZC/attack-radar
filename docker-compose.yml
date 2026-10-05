@@ -1,35 +1,101 @@
+x-beacon: &beacon
+  build: ./beacon
+  image: attack-radar/beacon
+  env_file: .env
+  environment:
+    POSTGRES_HOST: db
+    POSTGRES_PORT: 5432
+  restart: unless-stopped
+
 services:
   db:
-    image: postgres:18
+    image: docker.io/library/postgres:18
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Loopback only, so local `uv run` dev still works but the DB is never
+    # reachable from outside the host (Docker-published ports bypass ufw).
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
       - ./docker/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      # -h forces TCP: during first-boot init, postgres only listens on a unix
+      # socket, which would otherwise report ready too early.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       retries: 5
+    restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL} 
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: ${PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION:-true} 
+  # Runs migrations (retrying until the DB accepts connections) before
+  # starting the server. This used to be a separate one-shot `migrate`
+  # service, but podman-compose can't start containers whose dependency
+  # chain includes an exited container.
+  api:
+    <<: *beacon
+    command:
+      - sh
+      - -c
+      - until migrate --migrations-dir /app/migrations; do sleep 2; done && exec uvicorn beacon.api.main:app --host 0.0.0.0 --port 8000 --proxy-headers
+    volumes:
+      - ./docker/migrations:/app/migrations:ro
+    healthcheck:
+      # CMD-SHELL with explicit quotes: podman-compose flattens CMD lists
+      # into an unquoted shell string, which chokes on the parentheses.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/host-metadata?size=1')\""]
+      interval: 10s
+      start_period: 15s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Runs a full ingest, then sleeps. AbuseIPDB's free tier allows 1000
+  # checks/day, so keep the interval long.
+  ingest:
+    <<: *beacon
+    command:
+      - sh
+      - -c
+      - while true; do ingest; sleep "$${INGEST_INTERVAL_SECONDS:-86400}"; done
+    volumes:
+      - ./beacon/src/beacon/data/GeoLite2-City.mmdb:/app/src/beacon/data/GeoLite2-City.mmdb:ro
+      - ./beacon/data_sources.yaml:/app/data_sources.yaml:ro
+    # Waits for api, since api is what applies the migrations.
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./radar
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    image: attack-radar/radar
     ports:
-      - "5050:80"
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Dev only: `docker compose --profile dev up`. Loopback-bound; reach it
+  # over an SSH tunnel if you ever need it on a server.
+  pgadmin:
+    image: docker.io/dpage/pgadmin4
+    profiles: [dev]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: ${PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION:-true}
+    ports:
+      - "127.0.0.1:5050:80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:
       - db
 
 volumes:
-  redis_data:
   pgdata:
   pgadmin-data:
-

@@ -27,10 +27,8 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # your frontend's exact origin
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_methods=["GET"],
 )
 
 @app.get("/host-metadata", response_model=list[HostMetadata])
