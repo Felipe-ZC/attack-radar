@@ -64,9 +64,16 @@ function App() {
   return (
     <div className='App'>
       <Globe 
-        globeImageUrl="https://upload.wikimedia.org/wikipedia/commons/2/2f/Solarsystemscope_texture_2k_earth_nightmap.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"
+        globeImageUrl="/earth-night.jpg"
         pointsData={pointsData} 
       />
+      <p className='attribution'>
+        Earth texture:{' '}
+        <a href='https://www.solarsystemscope.com/textures/' target='_blank' rel='noreferrer'>
+          Solar System Scope
+        </a>{' '}
+        (<a href='https://creativecommons.org/licenses/by/4.0/' target='_blank' rel='noreferrer'>CC BY 4.0</a>)
+      </p>
     </div>
   )
 }
