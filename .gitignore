@@ -155,3 +155,64 @@ data_sources.yaml
 
 # GeoIP databases
 *.mmdb
+
+# ─── Dependencies ──────────────────────────────
+node_modules/
+
+# ─── Build output ──────────────────────────────
+dist/
+dist-ssr/
+build/
+*.local
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Vite cache (older setups put it outside node_modules)
+.vite/
+vite.config.*.timestamp-*
+
+# ─── Logs ──────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ─── Environment variables ─────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Testing ───────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+cypress/videos/
+cypress/screenshots/
+
+# ─── Deploy platforms ──────────────────────────
+.vercel/
+.netlify/
+
+# ─── Editors / IDEs ────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── OS files ──────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Misc caches ───────────────────────────────
+.eslintcache
+.stylelintcache
+.cache/

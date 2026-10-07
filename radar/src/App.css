@@ -1,0 +1,17 @@
+.App {
+  width: 100vw;
+  height: 100vh;
+}
+
+.attribution {
+  position: fixed;
+  right: 8px;
+  bottom: 6px;
+  margin: 0;
+  font: 11px/1.4 system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.attribution a {
+  color: inherit;
+}
